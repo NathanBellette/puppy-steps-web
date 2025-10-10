@@ -130,6 +130,40 @@ The application is built with a mobile-first approach:
 - **Zustand**: Client state management for UI state
 - **Optimistic Updates**: Immediate UI feedback with rollback on errors
 
+## 🚀 Deployment
+
+This project is configured to deploy to Firebase Hosting via GitHub Actions.
+
+### Automated Deployment
+
+When you push to the `main` branch, GitHub Actions will automatically:
+1. Run tests and linting
+2. Build the application
+3. Deploy to Firebase Hosting
+
+### Setup Instructions
+
+To set up Firebase Hosting deployment:
+1. Follow the detailed guide in [`.github/FIREBASE_DEPLOYMENT_SETUP.md`](.github/FIREBASE_DEPLOYMENT_SETUP.md)
+2. Add required GitHub Secrets to your repository
+3. Push to `main` to trigger deployment
+
+### Manual Deployment
+
+You can also deploy manually:
+```bash
+# Install dependencies
+npm install
+
+# Build the application
+npm run build
+
+# Deploy to Firebase
+npm run firebase:deploy
+```
+
+Your app will be available at: `https://your-project-id.web.app`
+
 ## 🎯 Future Enhancements
 
 - [ ] Interactive calendar with session highlighting

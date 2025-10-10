@@ -16,7 +16,9 @@
     "audit": "npm audit --audit-level=moderate",
     "audit:fix": "npm audit fix --audit-level=moderate",
     "outdated": "npm outdated",
-    "update": "npm update"
+    "update": "npm update",
+    "firebase:emulators": "firebase emulators:start",
+    "firebase:deploy": "firebase deploy --only hosting"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.2",
@@ -55,6 +57,7 @@
     "eslint": "^8.53.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.4",
+    "firebase-tools": "^13.0.0",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
     "typescript": "^5.2.2",
