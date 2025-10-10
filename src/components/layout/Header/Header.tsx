@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { Menu, Bell, User } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { useDogs } from '@/context/DogContext';
 import { DogAvatar } from '@/components/ui/DogAvatar';
-import { Button } from '@/components/ui/Button';
 import { Select, SelectOption } from '@/components/ui/Select';
 
 interface HeaderProps {
