@@ -8,7 +8,7 @@ import {
   deleteGoal,
   getGoal 
 } from '@/lib/firestore';
-import { Goal, GoalFormData, GoalCategory } from '@/types';
+import { Goal, GoalFormData, SessionType, createInitialGoalsForDog } from '@/types';
 
 export const useGoals = (dogId?: string) => {
   const { user } = useAuth();
@@ -30,7 +30,8 @@ export const useGoals = (dogId?: string) => {
       return createGoal({
         ...goalData,
         userId: user!.uid,
-        status: 'not_started',
+        targetCount: goalData.targetCount || 1,
+        currentCount: 0,
         isCompleted: false,
       });
     },
@@ -40,7 +41,7 @@ export const useGoals = (dogId?: string) => {
   });
 
   const updateGoalMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<GoalFormData> }) => {
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Goal> }) => {
       return updateGoal(id, data);
     },
     onSuccess: () => {
@@ -52,12 +53,48 @@ export const useGoals = (dogId?: string) => {
     mutationFn: async ({ id, isCompleted }: { id: string; isCompleted: boolean }) => {
       return updateGoal(id, {
         isCompleted,
-        status: isCompleted ? 'completed' : 'in_progress',
-        completedAt: isCompleted ? new Date() : undefined,
+        completedDate: isCompleted ? new Date() : undefined,
+        updatedAt: new Date(),
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals', user?.uid, dogId] });
+    },
+  });
+
+  // New mutation to increment goal count
+  const incrementGoalMutation = useMutation({
+    mutationFn: async (goalId: string) => {
+      const goal = goals.find(g => g.id === goalId);
+      if (!goal) throw new Error('Goal not found');
+      
+      const newCount = goal.currentCount + 1;
+      const shouldComplete = newCount >= goal.targetCount;
+      
+      return updateGoal(goalId, {
+        currentCount: newCount,
+        isCompleted: shouldComplete,
+        completedDate: shouldComplete ? new Date() : goal.completedDate,
+        updatedAt: new Date(),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['goals', user?.uid, dogId] });
+    },
+  });
+
+  // Create all predefined goals for a dog
+  const initializeGoalsMutation = useMutation({
+    mutationFn: async (dogId: string) => {
+      if (!user) throw new Error('User not authenticated');
+      const initialGoals = createInitialGoalsForDog(dogId, user.uid);
+      
+      // Create all goals in batch
+      const promises = initialGoals.map(goal => createGoal(goal));
+      return Promise.all(promises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['goals', user?.uid] });
     },
   });
 
@@ -76,10 +113,14 @@ export const useGoals = (dogId?: string) => {
     createGoal: createGoalMutation.mutateAsync,
     updateGoal: updateGoalMutation.mutateAsync,
     toggleGoal: toggleGoalMutation.mutateAsync,
+    incrementGoal: incrementGoalMutation.mutateAsync,
+    initializeGoals: initializeGoalsMutation.mutateAsync,
     deleteGoal: deleteGoalMutation.mutateAsync,
     isCreating: createGoalMutation.isPending,
     isUpdating: updateGoalMutation.isPending,
     isToggling: toggleGoalMutation.isPending,
+    isIncrementing: incrementGoalMutation.isPending,
+    isInitializing: initializeGoalsMutation.isPending,
     isDeleting: deleteGoalMutation.isPending,
   };
 };
@@ -110,24 +151,24 @@ export const useGoalStats = (dogId?: string) => {
   const stats = {
     totalGoals: goals.length,
     completedGoals: goals.filter(g => g.isCompleted).length,
-    categoryProgress: {} as Record<GoalCategory, { total: number; completed: number; percentage: number }>,
+    categoryProgress: {} as Record<SessionType, { total: number; completed: number; percentage: number }>,
     todaysGoals: goals.filter(g => !g.isCompleted).slice(0, 5), // First 5 incomplete goals
   };
 
-  // Calculate category progress
+  // Calculate category progress by type
   goals.forEach(goal => {
-    if (!stats.categoryProgress[goal.category]) {
-      stats.categoryProgress[goal.category] = { total: 0, completed: 0, percentage: 0 };
+    if (!stats.categoryProgress[goal.type]) {
+      stats.categoryProgress[goal.type] = { total: 0, completed: 0, percentage: 0 };
     }
-    stats.categoryProgress[goal.category].total++;
+    stats.categoryProgress[goal.type].total++;
     if (goal.isCompleted) {
-      stats.categoryProgress[goal.category].completed++;
+      stats.categoryProgress[goal.type].completed++;
     }
   });
 
   // Calculate percentages
-  Object.keys(stats.categoryProgress).forEach(category => {
-    const catStats = stats.categoryProgress[category as GoalCategory];
+  Object.keys(stats.categoryProgress).forEach(type => {
+    const catStats = stats.categoryProgress[type as SessionType];
     catStats.percentage = catStats.total > 0 ? (catStats.completed / catStats.total) * 100 : 0;
   });
 

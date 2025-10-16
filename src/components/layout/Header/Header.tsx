@@ -3,7 +3,7 @@ import { Menu, Bell, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDogs } from '@/context/DogContext';
 import { DogAvatar } from '@/components/ui/DogAvatar';
-import { Select, SelectOption } from '@/components/ui/Select';X
+import { Select, SelectOption } from '@/components/ui/Select';
 
 interface HeaderProps {
   onMenuClick: () => void;

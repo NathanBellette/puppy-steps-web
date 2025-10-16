@@ -107,14 +107,14 @@ export const useSessionStats = (dogId?: string) => {
   const stats = {
     totalSessions: sessions.length,
     sessionsByType: {
-      person: sessions.filter(s => s.type === 'person').length,
-      dog: sessions.filter(s => s.type === 'dog').length,
-      environment: sessions.filter(s => s.type === 'environment').length,
-      noise: sessions.filter(s => s.type === 'noise').length,
+      people: sessions.filter(s => s.type === 'people').length,
+      dogs: sessions.filter(s => s.type === 'dogs').length,
+      environments: sessions.filter(s => s.type === 'environments').length,
+      noises: sessions.filter(s => s.type === 'noises').length,
     },
     averageReaction: sessions.length > 0 
       ? sessions.reduce((sum, s) => {
-          const reactionValues = { '😰': 1, '😟': 2, '😐': 3, '😊': 4, '😄': 5 };
+          const reactionValues = { '😰': 1, '😟': 2, '😐': 3, '😊': 4, '😍': 5 };
           return sum + (reactionValues[s.reaction as keyof typeof reactionValues] || 3);
         }, 0) / sessions.length
       : 3,
