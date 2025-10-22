@@ -10,10 +10,12 @@ import { useDogs } from '@/context/DogContext';
 import { useGoalStats, useGoals } from '@/hooks/useGoals';
 import { useSessionStats, useSessions } from '@/hooks/useSessions';
 import { Target, Calendar, TrendingUp, Award, Plus } from 'lucide-react';
+import {LogSessionModal} from "@/components/LogSessionModal";
 
 export const Dashboard = () => {
   const { selectedDog } = useDogs();
-  const [showAddDogModal, setShowAddDogModal] = useState(false);
+  const [showAddDogModal, setShowAddDogModal] = useState<boolean>(false);
+  const [showLogSessionModal, setShowLogSessionModal] = useState<boolean>(false);
   const { stats: goalStats, isLoading: goalsLoading } = useGoalStats(selectedDog?.id);
   const { goals, isLoading: allGoalsLoading, incrementGoal } = useGoals(selectedDog?.id);
   const { stats: sessionStats, isLoading: sessionsLoading } = useSessionStats(selectedDog?.id);
@@ -21,6 +23,10 @@ export const Dashboard = () => {
 
   const todaysGoals = goals.filter(goal => !goal.isCompleted).slice(0, 5);
   const recentSessions = sessions.slice(0, 3);
+
+  if(!allGoalsLoading) {
+    console.log('sessions in dashboard: ', sessions)
+  }
 
   if (!selectedDog) {
     return (
@@ -50,6 +56,13 @@ export const Dashboard = () => {
 
   return (
     <div className="space-y-6">
+      {/* Log Session Modal */}
+      <LogSessionModal
+          isOpen={showLogSessionModal}
+          onClose={() => setShowLogSessionModal(false)}
+          dogId={selectedDog.id}
+          dogName={selectedDog.name}
+      />
       {/* Welcome Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -241,7 +254,7 @@ export const Dashboard = () => {
                 <p className="text-gray-500 dark:text-gray-400">
                   Start logging socialization sessions to track progress.
                 </p>
-                <Button className="mt-4" variant="outline">
+                <Button className="mt-4" variant="outline" onClick={() => setShowLogSessionModal(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Log First Session
                 </Button>

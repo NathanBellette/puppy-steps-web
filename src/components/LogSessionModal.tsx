@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
-import { Select } from './ui/Select';
 import { useSessions } from '@/hooks/useSessions';
 import { SessionType, SESSION_TYPE_EMOJI, SESSION_CATEGORIES, ReactionLevel, REACTION_LABELS } from '@/types';
 import { X } from 'lucide-react';
@@ -73,7 +72,7 @@ export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionM
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Log Session for ${dogName}`}>
+    <Modal isOpen={isOpen} onClose={onClose} title={`Log Session for ${dogName}`} className="p-8">
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Date */}
         <div>

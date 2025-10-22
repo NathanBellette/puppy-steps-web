@@ -1,4 +1,4 @@
-export type SessionType = 'people' | 'dogs' | 'environments' | 'noises';
+export type SessionType = 'people' | 'dogs' | 'environments' | 'noises' | 'People' | 'Dogs' | 'Environments' | 'Noises';
 
 export type ReactionLevel = '😰' | '😟' | '😐' | '😊' | '😍';
 
@@ -12,8 +12,9 @@ export interface Session {
   reaction: ReactionLevel;
   notes?: string;
   photoUrl?: string;
+  photoURL?: string; // iOS uses photoURL
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt?: Date; // iOS doesn't have this field
 }
 
 export interface SessionFormData {
@@ -63,6 +64,43 @@ export const SESSION_CATEGORIES: Record<SessionType, string[]> = {
     'Umbrella',
     'Bicycles',
     'Skateboards'
+  ],
+  // iOS capitalized versions
+  People: [
+    'Men',
+    'Women',
+    'Children',
+    'Elderly People',
+    'People with Hats',
+    'People with Glasses'
+  ],
+  Dogs: [
+    'Small Dogs',
+    'Big Dogs',
+    'Puppies',
+    'Senior Dogs',
+    'Different Breeds'
+  ],
+  Environments: [
+    'Park',
+    'Sidewalk',
+    'Café',
+    'Vet Office',
+    'Pet Store',
+    'Car Rides',
+    'Public Transport',
+    'Elevator'
+  ],
+  Noises: [
+    'Vacuum Cleaner',
+    'Car Horns',
+    'Thunder',
+    'Fireworks',
+    'Doorbell',
+    'Phone Ringing',
+    'Umbrella',
+    'Bicycles',
+    'Skateboards'
   ]
 };
 
@@ -71,7 +109,12 @@ export const SESSION_TYPE_EMOJI: Record<SessionType, string> = {
   people: '👥',
   dogs: '🐕',
   environments: '🏠',
-  noises: '🔊'
+  noises: '🔊',
+  // iOS capitalized versions
+  People: '👥',
+  Dogs: '🐕',
+  Environments: '🏠',
+  Noises: '🔊'
 };
 
 // Helper to get display name for reaction

@@ -8,7 +8,8 @@ import {
   BookOpen, 
   Settings,
   X,
-  LogOut
+  LogOut,
+  Activity
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -20,7 +21,7 @@ interface SidebarProps {
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Goals', href: '/goals', icon: Target },
-  { name: 'Sessions', href: '/sessions', icon: Calendar },
+  { name: 'Sessions', href: '/sessions', icon: Activity },
   { name: 'Calendar', href: '/calendar', icon: Calendar },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Resources', href: '/resources', icon: BookOpen },

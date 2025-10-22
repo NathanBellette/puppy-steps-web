@@ -9,9 +9,6 @@ import {
   query,
   where,
   orderBy,
-  limit,
-  startAfter,
-  DocumentSnapshot,
   QueryConstraint,
 } from 'firebase/firestore';
 import { db } from './firebase';
@@ -70,17 +67,28 @@ export const getDocuments = async <T>(
   collectionName: string,
   constraints: QueryConstraint[] = []
 ): Promise<T[]> => {
-  const q = query(collection(db, collectionName), ...constraints);
-  const querySnapshot = await getDocs(q);
-  
-  return querySnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as T[];
+  try {
+    console.log(`getDocuments called for collection: ${collectionName} with constraints:`, constraints);
+    const q = query(collection(db, collectionName), ...constraints);
+    console.log('Firebase query created:', q);
+    const querySnapshot = await getDocs(q);
+    console.log('Firebase querySnapshot received:', querySnapshot);
+    
+    const result = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as T[];
+    
+    console.log('getDocuments returning:', result);
+    return result;
+  } catch (error) {
+    console.error(`Error in getDocuments for collection ${collectionName}:`, error);
+    throw error;
+  }
 };
 
 // Dog-specific operations
-export const createDog = async (dogData: Omit<Dog, 'id' | 'userId' | 'createdAt' | 'updatedAt'>): Promise<string> => {
+export const createDog = async (dogData: Omit<Dog, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
   return createDocument<Dog>(COLLECTIONS.DOGS, dogData);
 };
 
@@ -104,11 +112,11 @@ export const getUserDogs = async (userId: string): Promise<Dog[]> => {
 };
 
 // Session-specific operations
-export const createSession = async (sessionData: Omit<Session, 'id' | 'userId' | 'createdAt' | 'updatedAt'>): Promise<string> => {
+export const createSession = async (sessionData: Omit<Session, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
   return createDocument<Session>(COLLECTIONS.SESSIONS, sessionData);
 };
 
-export const updateSession = async (id: string, data: Partial<Omit<Session, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>): Promise<void> => {
+export const updateSession = async (id: string, data: Partial<Omit<Session, 'id' | 'createdAt' | 'updatedAt'>>): Promise<void> => {
   return updateDocument<Session>(COLLECTIONS.SESSIONS, id, data);
 };
 
@@ -125,6 +133,7 @@ export const getUserSessions = async (
   dogId?: string,
   filters?: SessionFilters
 ): Promise<Session[]> => {
+
   const constraints: QueryConstraint[] = [
     where('userId', '==', userId),
     orderBy('date', 'desc'),
@@ -146,11 +155,21 @@ export const getUserSessions = async (
     constraints.push(where('date', '<=', filters.dateTo));
   }
 
-  return getDocuments<Session>(COLLECTIONS.SESSIONS, constraints);
+  console.log('Firebase query constraints:', constraints);
+  
+  try {
+    const result = await getDocuments<Session>(COLLECTIONS.SESSIONS, constraints);
+    console.log('getDocuments returned with result: ', result);
+    console.log('Firebase query result:', result);
+    return result;
+  } catch (error) {
+    console.error('Error in getUserSessions:', error);
+    throw error;
+  }
 };
 
 // Goal-specific operations
-export const createGoal = async (goalData: Omit<Goal, 'id' | 'userId' | 'createdAt' | 'updatedAt'>): Promise<string> => {
+export const createGoal = async (goalData: Omit<Goal, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
   return createDocument<Goal>(COLLECTIONS.GOALS, goalData);
 };
 

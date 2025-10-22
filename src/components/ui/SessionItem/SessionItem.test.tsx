@@ -27,7 +27,7 @@ describe('SessionItem', () => {
     userId: 'user-1',
     dogId: 'dog-1',
     date: new Date('2024-01-15T10:30:00'),
-    type: 'person',
+    type: 'people',
     reaction: '😊',
     notes: 'Met a friendly stranger',
     createdAt: new Date('2024-01-15'),
@@ -53,16 +53,16 @@ describe('SessionItem', () => {
 
   it('renders different session types correctly', () => {
     const { rerender } = render(<SessionItem session={mockSession} />);
-    expect(screen.getByText('Person')).toBeInTheDocument();
+    expect(screen.getByText('People')).toBeInTheDocument();
 
-    rerender(<SessionItem session={{ ...mockSession, type: 'dog' }} />);
-    expect(screen.getByText('Dog')).toBeInTheDocument();
+    rerender(<SessionItem session={{ ...mockSession, type: 'dogs' }} />);
+    expect(screen.getByText('Dogs')).toBeInTheDocument();
 
-    rerender(<SessionItem session={{ ...mockSession, type: 'environment' }} />);
-    expect(screen.getByText('Environment')).toBeInTheDocument();
+    rerender(<SessionItem session={{ ...mockSession, type: 'environments' }} />);
+    expect(screen.getByText('Environments')).toBeInTheDocument();
 
-    rerender(<SessionItem session={{ ...mockSession, type: 'noise' }} />);
-    expect(screen.getByText('Noise')).toBeInTheDocument();
+    rerender(<SessionItem session={{ ...mockSession, type: 'noises' }} />);
+    expect(screen.getByText('Noises')).toBeInTheDocument();
   });
 
   it('renders different reaction levels correctly', () => {
