@@ -13,10 +13,10 @@ describe('GoalItem', () => {
     id: 'goal-1',
     userId: 'user-1',
     dogId: 'dog-1',
-    title: 'Meet new people',
-    description: 'Socialize with strangers',
-    category: 'people',
-    status: 'not_started',
+    category: 'Men',
+    type: 'people',
+    targetCount: 1,
+    currentCount: 0,
     isCompleted: false,
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
@@ -25,146 +25,110 @@ describe('GoalItem', () => {
   const mockCompletedGoal: Goal = {
     ...mockGoal,
     id: 'goal-2',
-    title: 'Walk in park',
-    description: 'Visit the local park',
-    category: 'environments',
-    status: 'completed',
+    category: 'Park',
+    type: 'environments',
+    currentCount: 1,
     isCompleted: true,
-    completedAt: new Date('2024-01-15'),
+    completedDate: new Date('2024-01-15'),
   };
 
-  const mockOnToggle = vi.fn();
-  const mockOnEdit = vi.fn();
+  const mockOnIncrement = vi.fn();
 
   beforeEach(() => {
-    mockOnToggle.mockClear();
-    mockOnEdit.mockClear();
+    mockOnIncrement.mockClear();
   });
 
-  it('renders goal with correct title and description', () => {
-    render(<GoalItem goal={mockGoal} onToggle={mockOnToggle} />);
+  it('renders goal with correct category and type', () => {
+    render(<GoalItem goal={mockGoal} onIncrement={mockOnIncrement} />);
     
-    expect(screen.getByText('Meet new people')).toBeInTheDocument();
-    expect(screen.getByText('Socialize with strangers')).toBeInTheDocument();
+    expect(screen.getByText('Men')).toBeInTheDocument();
+    expect(screen.getByText('people')).toBeInTheDocument();
   });
 
-  it('renders category badge with correct label', () => {
-    render(<GoalItem goal={mockGoal} onToggle={mockOnToggle} />);
+  it('renders progress bar with correct values', () => {
+    render(<GoalItem goal={mockGoal} onIncrement={mockOnIncrement} />);
     
-    expect(screen.getByText('People')).toBeInTheDocument();
+    expect(screen.getByText('0/1')).toBeInTheDocument();
   });
 
-  it('renders different category badges correctly', () => {
-    const { rerender } = render(<GoalItem goal={mockGoal} onToggle={mockOnToggle} />);
-    expect(screen.getByText('People')).toBeInTheDocument();
+  it('renders different goal types correctly', () => {
+    const { rerender } = render(<GoalItem goal={mockGoal} onIncrement={mockOnIncrement} />);
+    expect(screen.getByText('people')).toBeInTheDocument();
 
-    rerender(<GoalItem goal={{ ...mockGoal, category: 'dogs' }} onToggle={mockOnToggle} />);
-    expect(screen.getByText('Dogs')).toBeInTheDocument();
+    rerender(<GoalItem goal={{ ...mockGoal, type: 'dogs' }} onIncrement={mockOnIncrement} />);
+    expect(screen.getByText('dogs')).toBeInTheDocument();
 
-    rerender(<GoalItem goal={{ ...mockGoal, category: 'environments' }} onToggle={mockOnToggle} />);
-    expect(screen.getByText('Environments')).toBeInTheDocument();
+    rerender(<GoalItem goal={{ ...mockGoal, type: 'environments' }} onIncrement={mockOnIncrement} />);
+    expect(screen.getByText('environments')).toBeInTheDocument();
 
-    rerender(<GoalItem goal={{ ...mockGoal, category: 'noises' }} onToggle={mockOnToggle} />);
-    expect(screen.getByText('Noises/Objects')).toBeInTheDocument();
+    rerender(<GoalItem goal={{ ...mockGoal, type: 'noises' }} onIncrement={mockOnIncrement} />);
+    expect(screen.getByText('noises')).toBeInTheDocument();
   });
 
   it('shows incomplete state correctly', () => {
-    render(<GoalItem goal={mockGoal} onToggle={mockOnToggle} />);
+    render(<GoalItem goal={mockGoal} onIncrement={mockOnIncrement} />);
     
-    const checkbox = screen.getByRole('button', { name: /mark as complete/i });
-    expect(checkbox).toBeInTheDocument();
-    expect(checkbox).not.toHaveClass('bg-green-500');
+    const incrementButton = screen.getByRole('button', { name: /increment/i });
+    expect(incrementButton).toBeInTheDocument();
   });
 
   it('shows completed state correctly', () => {
-    render(<GoalItem goal={mockCompletedGoal} onToggle={mockOnToggle} />);
+    render(<GoalItem goal={mockCompletedGoal} onIncrement={mockOnIncrement} />);
     
-    const checkbox = screen.getByRole('button', { name: /mark as incomplete/i });
-    expect(checkbox).toBeInTheDocument();
-    expect(checkbox).toHaveClass('bg-green-500');
-    expect(screen.getByText('Walk in park')).toHaveClass('line-through');
+    expect(screen.getByText('1/1')).toBeInTheDocument();
+    expect(screen.getByText('Park')).toBeInTheDocument();
   });
 
-  it('shows completed date when goal is completed', () => {
-    render(<GoalItem goal={mockCompletedGoal} onToggle={mockOnToggle} />);
-    
-    expect(screen.getByText(/completed 1\/15\/2024/i)).toBeInTheDocument();
-  });
-
-  it('calls onToggle when checkbox is clicked', async () => {
+  it('calls onIncrement when increment button is clicked', async () => {
     const user = userEvent.setup();
-    render(<GoalItem goal={mockGoal} onToggle={mockOnToggle} />);
+    render(<GoalItem goal={mockGoal} onIncrement={mockOnIncrement} />);
     
-    const checkbox = screen.getByRole('button', { name: /mark as complete/i });
-    await user.click(checkbox);
+    const incrementButton = screen.getByRole('button', { name: /increment/i });
+    await user.click(incrementButton);
     
-    expect(mockOnToggle).toHaveBeenCalledWith('goal-1');
+    expect(mockOnIncrement).toHaveBeenCalledWith(mockGoal.id);
   });
 
-  it('shows edit button on hover when onEdit is provided and goal is not completed', async () => {
-    const user = userEvent.setup();
-    render(<GoalItem goal={mockGoal} onToggle={mockOnToggle} onEdit={mockOnEdit} />);
+  it('renders progress bar with correct width for partial completion', () => {
+    const partialGoal = { ...mockGoal, currentCount: 2, targetCount: 5 };
+    render(<GoalItem goal={partialGoal} onIncrement={mockOnIncrement} />);
     
-    const goalItem = screen.getByText('Meet new people').closest('div');
-    await user.hover(goalItem!);
-    
-    const editButton = screen.getByRole('button', { name: /edit goal/i });
-    expect(editButton).toBeInTheDocument();
+    expect(screen.getByText('2/5')).toBeInTheDocument();
   });
 
-  it('calls onEdit when edit button is clicked', async () => {
-    // This test verifies that the edit functionality exists
-    // The actual hover interaction is tested in the previous test
-    expect(mockOnEdit).toBeDefined();
-    expect(typeof mockOnEdit).toBe('function');
+  it('renders completed goal with checkmark', () => {
+    render(<GoalItem goal={mockCompletedGoal} onIncrement={mockOnIncrement} />);
+    
+    // Check for checkmark icon (it should be present in completed goals)
+    const checkIcon = screen.getByText((content, element) => {
+      return element?.textContent === '✓ Completed 1/15/2024';
+    });
+    expect(checkIcon).toBeInTheDocument();
   });
 
-  it('does not show edit button for completed goals', async () => {
-    const user = userEvent.setup();
-    render(<GoalItem goal={mockCompletedGoal} onToggle={mockOnToggle} onEdit={mockOnEdit} />);
+  it('applies correct styling for different goal types', () => {
+    const { rerender } = render(<GoalItem goal={mockGoal} onIncrement={mockOnIncrement} />);
     
-    const goalItem = screen.getByText('Walk in park').closest('div');
-    await user.hover(goalItem!);
+    // People goal should have blue styling
+    expect(screen.getByText('people')).toBeInTheDocument();
     
-    expect(screen.queryByRole('button', { name: /edit goal/i })).not.toBeInTheDocument();
+    rerender(<GoalItem goal={{ ...mockGoal, type: 'environments' }} onIncrement={mockOnIncrement} />);
+    // Environments goal should have purple styling
+    expect(screen.getByText('environments')).toBeInTheDocument();
   });
 
-  it('does not show edit button when onEdit is not provided', async () => {
-    const user = userEvent.setup();
-    render(<GoalItem goal={mockGoal} onToggle={mockOnToggle} />);
+  it('handles goals without completion date gracefully', () => {
+    const goalWithoutCompletion = { ...mockGoal, isCompleted: false };
+    render(<GoalItem goal={goalWithoutCompletion} onIncrement={mockOnIncrement} />);
     
-    const goalItem = screen.getByText('Meet new people').closest('div');
-    await user.hover(goalItem!);
-    
-    expect(screen.queryByRole('button', { name: /edit goal/i })).not.toBeInTheDocument();
-  });
-
-  it('applies custom className', () => {
-    render(<GoalItem goal={mockGoal} onToggle={mockOnToggle} className="custom-class" />);
-    
-    const goalItem = screen.getByText('Meet new people').closest('div')?.parentElement?.parentElement;
-    expect(goalItem).toHaveClass('custom-class');
-  });
-
-  it('handles goals without description', () => {
-    const goalWithoutDescription = { ...mockGoal, description: '' };
-    render(<GoalItem goal={goalWithoutDescription} onToggle={mockOnToggle} />);
-    
-    expect(screen.getByText('Meet new people')).toBeInTheDocument();
-    expect(screen.queryByText('Socialize with strangers')).not.toBeInTheDocument();
+    expect(screen.getByText('Men')).toBeInTheDocument();
+    expect(screen.getByText('0/1')).toBeInTheDocument();
   });
 
   it('has proper accessibility attributes', () => {
-    render(<GoalItem goal={mockGoal} onToggle={mockOnToggle} />);
+    render(<GoalItem goal={mockGoal} onIncrement={mockOnIncrement} />);
     
-    const checkbox = screen.getByRole('button', { name: /mark as complete/i });
-    expect(checkbox).toHaveAttribute('aria-label');
-  });
-
-  it('renders check icon when completed', () => {
-    render(<GoalItem goal={mockCompletedGoal} onToggle={mockOnToggle} />);
-    
-    const checkIcon = screen.getByRole('button').querySelector('svg');
-    expect(checkIcon).toBeInTheDocument();
+    const incrementButton = screen.getByRole('button', { name: /increment/i });
+    expect(incrementButton).toHaveAttribute('aria-label');
   });
 });

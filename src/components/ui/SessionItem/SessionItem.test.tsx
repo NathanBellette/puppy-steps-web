@@ -45,7 +45,7 @@ describe('SessionItem', () => {
   it('renders session with correct information', () => {
     render(<SessionItem session={mockSession} />);
     
-    expect(screen.getByText('Person')).toBeInTheDocument();
+    expect(screen.getByText('People')).toBeInTheDocument();
     expect(screen.getByText('😊')).toBeInTheDocument();
     expect(screen.getByText('Happy')).toBeInTheDocument();
     expect(screen.getByText('Met a friendly stranger')).toBeInTheDocument();
@@ -157,7 +157,7 @@ describe('SessionItem', () => {
     render(<SessionItem session={mockSession} className="custom-class" />);
     
     // Find the root div element that should have the custom class
-    const sessionItem = screen.getByText('Person').closest('div')?.parentElement?.parentElement?.parentElement;
+    const sessionItem = screen.getByText('People').closest('div')?.parentElement?.parentElement?.parentElement;
     expect(sessionItem).toHaveClass('custom-class');
   });
 
@@ -175,7 +175,7 @@ describe('SessionItem', () => {
     render(<SessionItem session={mockSession} />);
     
     // Check that the icon is rendered (it should be an SVG element)
-    const iconContainer = screen.getByText('Person').closest('div')?.querySelector('svg');
+    const iconContainer = screen.getByText('People').closest('div')?.querySelector('svg');
     expect(iconContainer).toBeInTheDocument();
   });
 
