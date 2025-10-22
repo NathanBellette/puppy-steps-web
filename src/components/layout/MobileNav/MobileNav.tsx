@@ -6,13 +6,14 @@ import {
   Calendar, 
   BarChart3, 
   BookOpen, 
-  Settings
+  Settings,
+  Activity
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Goals', href: '/goals', icon: Target },
-  { name: 'Sessions', href: '/sessions', icon: Calendar },
+  { name: 'Sessions', href: '/sessions', icon: Activity },
   { name: 'Calendar', href: '/calendar', icon: Calendar },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Resources', href: '/resources', icon: BookOpen },
