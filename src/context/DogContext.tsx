@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Dog } from '@/types';
 import { getUserDogs } from '@/lib/firestore';
 import { useAuth } from './AuthContext';
@@ -33,7 +33,7 @@ export const DogProvider: React.FC<DogProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDogs = async () => {
+  const fetchDogs = useCallback(async () => {
     if (!user) {
       setDogs([]);
       setSelectedDog(null);
@@ -57,11 +57,11 @@ export const DogProvider: React.FC<DogProviderProps> = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, selectedDog]);
 
   useEffect(() => {
     fetchDogs();
-  }, [user]);
+  }, [fetchDogs]);
 
   // Update selected dog when dogs change
   useEffect(() => {

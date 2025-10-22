@@ -32,11 +32,7 @@ export const AuthPage = () => {
 
   const from = location.state?.from?.pathname || '/dashboard';
 
-  // Redirect if already authenticated
-  if (user) {
-    return <Navigate to={from} replace />;
-  }
-
+  // Initialize forms before any conditional returns
   const signInForm = useForm<SignInForm>({
     resolver: zodResolver(signInSchema),
   });
@@ -44,6 +40,11 @@ export const AuthPage = () => {
   const signUpForm = useForm<SignUpForm>({
     resolver: zodResolver(signUpSchema),
   });
+
+  // Redirect if already authenticated
+  if (user) {
+    return <Navigate to={from} replace />;
+  }
 
   const onSubmitSignIn = async (data: SignInForm) => {
     setIsLoading(true);

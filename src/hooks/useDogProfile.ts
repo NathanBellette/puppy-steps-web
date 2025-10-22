@@ -8,7 +8,7 @@ import {
   getDog 
 } from '@/lib/firestore';
 import { uploadDogPhoto } from '@/lib/storage';
-import { Dog, DogFormData } from '@/types';
+import { DogFormData } from '@/types';
 
 export const useDogs = () => {
   const { user } = useAuth();
@@ -33,7 +33,7 @@ export const useDogs = () => {
         photoUrl = await uploadDogPhoto(dogData.photo, user!.uid, 'temp');
       }
 
-      const { photo, ...data } = dogData;
+      const { photo: _photo, ...data } = dogData;
       return createDog({
         ...data,
         userId: user!.uid,
@@ -61,7 +61,7 @@ export const useDogs = () => {
         photoUrl = await uploadDogPhoto(photo, user!.uid, id);
       }
 
-      const { photo: _, ...updateData } = data;
+      const { photo: _omit, ...updateData } = data;
       return updateDog(id, { ...updateData, photoUrl });
     },
     onSuccess: () => {

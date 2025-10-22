@@ -36,7 +36,7 @@ export const useSessions = (dogId?: string, filters?: SessionFilters) => {
         photoUrl = await uploadSessionPhoto(sessionData.photo, user!.uid, sessionId);
       }
 
-      const { photo, ...data } = sessionData;
+      const { photo: _photo, ...data } = sessionData;
       return createSession({
         ...data,
         userId: user!.uid,
@@ -64,7 +64,7 @@ export const useSessions = (dogId?: string, filters?: SessionFilters) => {
         photoUrl = await uploadSessionPhoto(photo, user!.uid, id);
       }
 
-      const { photo: _, ...updateData } = data;
+      const { photo: _omit, ...updateData } = data;
       return updateSession(id, { ...updateData, photoUrl });
     },
     onSuccess: () => {

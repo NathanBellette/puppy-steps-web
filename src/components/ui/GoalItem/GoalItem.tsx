@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Check, Plus } from 'lucide-react';
-import { Goal, SessionType, SESSION_TYPE_EMOJI } from '@/types';
+import { Goal, SESSION_TYPE_EMOJI } from '@/types';
 
 export interface GoalItemProps {
   goal: Goal;
@@ -15,12 +15,7 @@ const GoalItem = ({ goal, onIncrement, onEdit, className, showTypeEmoji = false 
   const [isHovered, setIsHovered] = useState(false);
   const [isIncrementing, setIsIncrementing] = useState(false);
 
-  const typeColors: Record<SessionType, string> = {
-    people: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-    dogs: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-    environments: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
-    noises: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
-  };
+  // Type-specific colors handled inline where needed
 
   const progressPercentage = goal.targetCount > 0 
     ? (goal.currentCount / goal.targetCount) * 100 

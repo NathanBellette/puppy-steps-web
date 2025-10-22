@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+// import { Input } from '@/components/ui/Input';
 import { DogAvatar } from '@/components/ui/DogAvatar';
 import { Modal } from '@/components/ui/Modal';
 import { AddDogModal } from '@/components/AddDogModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useDogs } from '@/context/DogContext';
 import { 
-  Settings as SettingsIcon, 
+  // Settings as SettingsIcon, 
   User, 
   Moon, 
   Sun, 

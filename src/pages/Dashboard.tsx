@@ -19,7 +19,7 @@ export const Dashboard = () => {
   const { stats: goalStats, isLoading: goalsLoading } = useGoalStats(selectedDog?.id);
   const { goals, isLoading: allGoalsLoading, incrementGoal } = useGoals(selectedDog?.id);
   const { stats: sessionStats, isLoading: sessionsLoading } = useSessionStats(selectedDog?.id);
-  const { sessions, isLoading: allSessionsLoading } = useSessions(selectedDog?.id);
+  const { sessions } = useSessions(selectedDog?.id);
 
   const todaysGoals = goals.filter(goal => !goal.isCompleted).slice(0, 5);
   const recentSessions = sessions.slice(0, 3);

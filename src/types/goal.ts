@@ -1,4 +1,4 @@
-import { SessionType, SESSION_CATEGORIES } from './session';
+import { SessionType } from './session';
 
 // Goal structure matching iOS app
 export interface Goal {
