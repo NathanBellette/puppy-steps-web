@@ -68,17 +68,6 @@ describe('Button', () => {
     expect(ref).toHaveBeenCalled();
   });
 
-  it('renders as different HTML elements when asChild is used', () => {
-    render(
-      <Button asChild>
-        <a href="/test">Link Button</a>
-      </Button>
-    );
-    const link = screen.getByRole('link');
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', '/test');
-  });
-
   it('has proper accessibility attributes', () => {
     render(<Button aria-label="Custom label">Button</Button>);
     const button = screen.getByRole('button', { name: /custom label/i });

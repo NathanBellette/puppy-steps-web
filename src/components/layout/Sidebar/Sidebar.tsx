@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
-interface SidebarProps {
+export interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }

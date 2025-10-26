@@ -100,7 +100,7 @@ describe('GoalItem', () => {
     render(<GoalItem goal={mockCompletedGoal} onIncrement={mockOnIncrement} />);
     
     // Check for checkmark icon (it should be present in completed goals)
-    const checkIcon = screen.getByText((content, element) => {
+    const checkIcon = screen.getByText((_content, element) => {
       return element?.textContent === '✓ Completed 1/15/2024';
     });
     expect(checkIcon).toBeInTheDocument();

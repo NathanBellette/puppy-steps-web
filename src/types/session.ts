@@ -1,6 +1,6 @@
 export type SessionType = 'people' | 'dogs' | 'environments' | 'noises' | 'People' | 'Dogs' | 'Environments' | 'Noises';
 
-export type ReactionLevel = '😰' | '😟' | '😐' | '😊' | '😍';
+export type ReactionLevel = '😰' | '😟' | '😐' | '😊' | '😍' | '😄';
 
 export interface Session {
   id: string;
@@ -119,11 +119,12 @@ export const SESSION_TYPE_EMOJI: Record<SessionType, string> = {
 
 // Helper to get display name for reaction
 export const REACTION_LABELS: Record<ReactionLevel, string> = {
-  '😍': 'Very Positive',
-  '😊': 'Positive',
-  '😐': 'Neutral',
+  '😰': 'Very Negative',
   '😟': 'Negative',
-  '😰': 'Very Negative'
+  '😐': 'Neutral',
+  '😊': 'Positive',
+  '😍': 'Very Positive',
+  '😄': 'Extremely Positive'
 };
 
 export interface SessionFilters {

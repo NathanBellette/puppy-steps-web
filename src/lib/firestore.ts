@@ -173,7 +173,7 @@ export const createGoal = async (goalData: Omit<Goal, 'id' | 'createdAt' | 'upda
   return createDocument<Goal>(COLLECTIONS.GOALS, goalData);
 };
 
-export const updateGoal = async (id: string, data: Partial<Omit<Goal, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>): Promise<void> => {
+export const updateGoal = async (id: string, data: Partial<Omit<Goal, 'id' | 'userId' | 'createdAt'>>): Promise<void> => {
   return updateDocument<Goal>(COLLECTIONS.GOALS, id, data);
 };
 

@@ -14,7 +14,11 @@ const typeLabels: Record<SessionType, string> = {
   people: 'People',
   dogs: 'Dogs',
   environments: 'Environments',
-  noises: 'Noises & Objects'
+  noises: 'Noises & Objects',
+  People: 'People',
+  Dogs: 'Dogs',
+  Environments: 'Environments',
+  Noises: 'Noises & Objects'
 };
 
 export const Goals = () => {

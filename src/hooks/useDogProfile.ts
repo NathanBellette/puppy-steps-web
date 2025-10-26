@@ -61,7 +61,7 @@ export const useDogs = () => {
         photoUrl = await uploadDogPhoto(photo, user!.uid, id);
       }
 
-      const { photo: _omit, ...updateData } = data;
+      const { photoUrl: _omit, ...updateData } = data;
       return updateDog(id, { ...updateData, photoUrl });
     },
     onSuccess: () => {

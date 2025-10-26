@@ -32,6 +32,7 @@ describe('SessionItem', () => {
     notes: 'Met a friendly stranger',
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-01-15'),
+    category: ''
   };
 
   const mockOnEdit = vi.fn();

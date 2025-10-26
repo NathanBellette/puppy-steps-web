@@ -39,8 +39,8 @@ export const signUp = async (
     // Create user document in Firestore
     const userData: Omit<User, 'id'> = {
       email: user.email!,
-      displayName: displayName || user.displayName || null,
-      photoURL: user.photoURL || null,
+      displayName: displayName ?? user.displayName ?? undefined,
+      photoURL: user.photoURL ?? undefined,
       createdAt: new Date(),
       updatedAt: new Date(),
       preferences: {
