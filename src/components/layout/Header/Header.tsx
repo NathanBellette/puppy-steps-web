@@ -1,14 +1,10 @@
-import { Menu, User } from 'lucide-react';
+import { User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDogs } from '@/hooks/useDogProfile';
 import { DogAvatar } from '@/components/ui/DogAvatar';
 import { Select, SelectOption } from '@/components/ui/Select';
 
-export interface HeaderProps {
-  onMenuClick: () => void;
-}
-
-export const Header = ({ onMenuClick }: HeaderProps) => {
+export const Header = () => {
   const { user } = useAuth();
   const { dogs, selectedDog, setSelectedDog } = useDogs();
 
@@ -22,50 +18,46 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
   return (
     <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
       <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Left side */}
+        {/* Left side — App name (mobile only) + Dog selector */}
         <div className="flex items-center">
-          {/* Mobile menu button */}
-          <button
-            onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-800"
-            aria-label="Open menu"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
+          {/* Mobile app name */}
+          <div className="lg:hidden flex items-center mr-4">
+            <div className="h-8 w-8 rounded-lg bg-primary-500 flex items-center justify-center">
+              <span className="text-white font-bold text-sm">P</span>
+            </div>
+          </div>
 
           {/* Dog selector */}
-          <div className="ml-4 lg:ml-0">
-            <div className="flex items-center space-x-3">
-              {selectedDog && (
-                <DogAvatar
-                  name={selectedDog.name}
-                  photoUrl={selectedDog.photoUrl}
-                  size="sm"
-                />
-              )}
-              <div className="min-w-0 flex-1">
-                <Select
-                  value={selectedDog?.id || ''}
-                  onChange={(e) => handleDogChange(e.target.value)}
-                  className="w-48"
-                >
-                  <SelectOption value="" disabled>
-                    Select a dog
+          <div className="flex items-center space-x-3">
+            {selectedDog && (
+              <DogAvatar
+                name={selectedDog.name}
+                photoUrl={selectedDog.photoUrl}
+                size="sm"
+              />
+            )}
+            <div className="min-w-0 flex-1">
+              <Select
+                value={selectedDog?.id || ''}
+                onChange={(e) => handleDogChange(e.target.value)}
+                className="w-48"
+              >
+                <SelectOption value="" disabled>
+                  Select a dog
+                </SelectOption>
+                {dogs.map((dog) => (
+                  <SelectOption key={dog.id} value={dog.id}>
+                    {dog.name}
                   </SelectOption>
-                  {dogs.map((dog) => (
-                    <SelectOption key={dog.id} value={dog.id}>
-                      {dog.name}
-                    </SelectOption>
-                  ))}
-                </Select>
-              </div>
+                ))}
+              </Select>
             </div>
           </div>
         </div>
 
         {/* Right side */}
         <div className="flex items-center space-x-4">
-          {/* User menu */}
+          {/* User info */}
           <div className="relative">
             <div className="flex items-center space-x-3">
               <div className="hidden sm:block">

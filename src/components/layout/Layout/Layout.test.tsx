@@ -1,22 +1,17 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { Layout } from './Layout';
 
 // Mock the child components
 vi.mock('../Sidebar/Sidebar', () => ({
-  Sidebar: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => (
-    <div data-testid="sidebar" data-open={isOpen}>
-      <button onClick={onClose}>Close Sidebar</button>
-    </div>
+  Sidebar: () => (
+    <div data-testid="sidebar">Sidebar</div>
   ),
 }));
 
 vi.mock('../Header/Header', () => ({
-  Header: ({ onMenuClick }: { onMenuClick: () => void }) => (
-    <header data-testid="header">
-      <button onClick={onMenuClick}>Open Menu</button>
-    </header>
+  Header: () => (
+    <header data-testid="header">Header</header>
   ),
 }));
 
@@ -49,40 +44,6 @@ describe('Layout', () => {
     expect(screen.getByTestId('outlet')).toBeInTheDocument();
   });
 
-  it('starts with sidebar closed', () => {
-    render(<LayoutWrapper />);
-    
-    const sidebar = screen.getByTestId('sidebar');
-    expect(sidebar).toHaveAttribute('data-open', 'false');
-  });
-
-  it('opens sidebar when menu button is clicked', async () => {
-    const user = userEvent.setup();
-    render(<LayoutWrapper />);
-    
-    const menuButton = screen.getByRole('button', { name: /open menu/i });
-    await user.click(menuButton);
-    
-    const sidebar = screen.getByTestId('sidebar');
-    expect(sidebar).toHaveAttribute('data-open', 'true');
-  });
-
-  it('closes sidebar when close button is clicked', async () => {
-    const user = userEvent.setup();
-    render(<LayoutWrapper />);
-    
-    // First open the sidebar
-    const menuButton = screen.getByRole('button', { name: /open menu/i });
-    await user.click(menuButton);
-    
-    // Then close it
-    const closeButton = screen.getByRole('button', { name: /close sidebar/i });
-    await user.click(closeButton);
-    
-    const sidebar = screen.getByTestId('sidebar');
-    expect(sidebar).toHaveAttribute('data-open', 'false');
-  });
-
   it('renders main content area with proper styling', () => {
     render(<LayoutWrapper />);
     
@@ -101,7 +62,7 @@ describe('Layout', () => {
   it('has proper layout structure', () => {
     render(<LayoutWrapper />);
     
-    const layout = screen.getByTestId('sidebar').closest('div')?.parentElement;
+    const layout = screen.getByTestId('sidebar').parentElement;
     expect(layout).toHaveClass('min-h-screen', 'bg-gray-50', 'dark:bg-gray-900');
   });
 

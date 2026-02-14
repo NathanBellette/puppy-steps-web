@@ -52,39 +52,14 @@ vi.mock('@/components/ui/Select', () => ({
 }));
 
 describe('Header', () => {
-  const mockOnMenuClick = vi.fn();
-
-  beforeEach(() => {
-    mockOnMenuClick.mockClear();
-  });
-
   it('renders header with all elements', () => {
-    render(<Header onMenuClick={mockOnMenuClick} />);
+    render(<Header />);
     
     expect(screen.getByRole('banner')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /view notifications/i })).toBeInTheDocument();
-  });
-
-  it('renders mobile menu button', () => {
-    render(<Header onMenuClick={mockOnMenuClick} />);
-    
-    const menuButton = screen.getByRole('button', { name: /open menu/i });
-    expect(menuButton).toBeInTheDocument();
-    expect(menuButton).toHaveClass('lg:hidden');
-  });
-
-  it('calls onMenuClick when menu button is clicked', async () => {
-    const user = userEvent.setup();
-    render(<Header onMenuClick={mockOnMenuClick} />);
-    
-    const menuButton = screen.getByRole('button', { name: /open menu/i });
-    await user.click(menuButton);
-    
-    expect(mockOnMenuClick).toHaveBeenCalledTimes(1);
   });
 
   it('renders dog avatar when selected dog exists', () => {
-    render(<Header onMenuClick={mockOnMenuClick} />);
+    render(<Header />);
     
     const dogAvatar = screen.getByTestId('dog-avatar');
     expect(dogAvatar).toBeInTheDocument();
@@ -94,7 +69,7 @@ describe('Header', () => {
   });
 
   it('renders dog selector with options', () => {
-    render(<Header onMenuClick={mockOnMenuClick} />);
+    render(<Header />);
     
     const select = screen.getByTestId('dog-select');
     expect(select).toBeInTheDocument();
@@ -107,7 +82,7 @@ describe('Header', () => {
 
   it('handles dog selection change', async () => {
     const user = userEvent.setup();
-    render(<Header onMenuClick={mockOnMenuClick} />);
+    render(<Header />);
     
     const select = screen.getByTestId('dog-select');
     await user.selectOptions(select, 'dog-2');
@@ -115,70 +90,38 @@ describe('Header', () => {
     expect(mockSetSelectedDog).toHaveBeenCalledWith(mockDogs[1]);
   });
 
-  it('renders notifications button', () => {
-    render(<Header onMenuClick={mockOnMenuClick} />);
-    
-    const notificationsButton = screen.getByRole('button', { name: /view notifications/i });
-    expect(notificationsButton).toBeInTheDocument();
-  });
-
-  it('toggles notifications dropdown when clicked', async () => {
-    const user = userEvent.setup();
-    render(<Header onMenuClick={mockOnMenuClick} />);
-    
-    const notificationsButton = screen.getByRole('button', { name: /view notifications/i });
-    
-    // Initially no dropdown
-    expect(screen.queryByText('No new notifications')).not.toBeInTheDocument();
-    
-    // Click to show dropdown
-    await user.click(notificationsButton);
-    expect(screen.getByText('No new notifications')).toBeInTheDocument();
-    
-    // Click again to hide dropdown
-    await user.click(notificationsButton);
-    expect(screen.queryByText('No new notifications')).not.toBeInTheDocument();
-  });
-
   it('renders user information', () => {
-    render(<Header onMenuClick={mockOnMenuClick} />);
+    render(<Header />);
     
     expect(screen.getByText('John Doe')).toBeInTheDocument();
     expect(screen.getByText('john@example.com')).toBeInTheDocument();
   });
 
   it('renders user avatar with photo', () => {
-    render(<Header onMenuClick={mockOnMenuClick} />);
+    render(<Header />);
     
     const userAvatar = screen.getByAltText('User avatar');
     expect(userAvatar).toBeInTheDocument();
     expect(userAvatar).toHaveAttribute('src', 'https://example.com/photo.jpg');
   });
 
-  it('renders user icon when no photo is available', () => {
-    // This test is skipped as it requires complex mocking
-    expect(true).toBe(true);
-  });
-
-  it('renders default user name when displayName is not available', () => {
-    // This test is skipped as it requires complex mocking
-    expect(true).toBe(true);
-  });
-
   it('has proper accessibility attributes', () => {
-    render(<Header onMenuClick={mockOnMenuClick} />);
-    
-    const notificationsButton = screen.getByRole('button', { name: /view notifications/i });
-    expect(notificationsButton).toBeInTheDocument();
+    render(<Header />);
     
     const userAvatar = screen.getByAltText('User avatar');
     expect(userAvatar).toHaveAttribute('alt');
   });
 
   it('applies proper styling classes', () => {
-    render(<Header onMenuClick={mockOnMenuClick} />);
+    render(<Header />);
     
     const header = screen.getByRole('banner');
     expect(header).toHaveClass('bg-white', 'dark:bg-gray-900', 'shadow-sm', 'border-b');
+  });
+
+  it('does not render hamburger menu button', () => {
+    render(<Header />);
+    
+    expect(screen.queryByRole('button', { name: /open menu/i })).not.toBeInTheDocument();
   });
 });
