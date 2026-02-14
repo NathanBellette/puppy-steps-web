@@ -10,7 +10,6 @@ const Dashboard = lazy(() => import('@/pages/Dashboard').then(m => ({ default: m
 const Goals = lazy(() => import('@/pages/Goals').then(m => ({ default: m.Goals })));
 const Sessions = lazy(() => import('@/pages/Sessions').then(m => ({ default: m.Sessions })));
 const Calendar = lazy(() => import('@/pages/Calendar').then(m => ({ default: m.Calendar })));
-const Reports = lazy(() => import('@/pages/Reports').then(m => ({ default: m.Reports })));
 const Resources = lazy(() => import('@/pages/Resources').then(m => ({ default: m.Resources })));
 const Settings = lazy(() => import('@/pages/Settings').then(m => ({ default: m.Settings })));
 
@@ -67,14 +66,6 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <Calendar />
-          </Suspense>
-        ),
-      },
-      {
-        path: 'reports',
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <Reports />
           </Suspense>
         ),
       },

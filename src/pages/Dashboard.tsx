@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { CircularProgress } from '@/components/ui/Progress';
 import { Button } from '@/components/ui/Button';
@@ -10,9 +11,10 @@ import { useDogs } from '@/hooks/useDogProfile';
 import { useGoalStats, useGoals } from '@/hooks/useGoals';
 import { useSessionStats, useSessions } from '@/hooks/useSessions';
 import { Target, Calendar, TrendingUp, Award, Plus } from 'lucide-react';
-import {LogSessionModal} from "@/components/LogSessionModal";
+import { LogSessionModal } from "@/components/LogSessionModal";
 
 export const Dashboard = () => {
+  const navigate = useNavigate();
   const { selectedDog } = useDogs();
   const [showAddDogModal, setShowAddDogModal] = useState<boolean>(false);
   const [showLogSessionModal, setShowLogSessionModal] = useState<boolean>(false);
@@ -21,7 +23,7 @@ export const Dashboard = () => {
   const { stats: sessionStats, isLoading: sessionsLoading } = useSessionStats(selectedDog?.id);
   const { sessions } = useSessions(selectedDog?.id);
 
-  const todaysGoals = goals.filter(goal => !goal.isCompleted).slice(0, 5);
+  const nextGoals = goals.filter(goal => !goal.isCompleted).slice(0, 5);
   const recentSessions = sessions.slice(0, 3);
 
   if (!selectedDog) {
@@ -69,7 +71,7 @@ export const Dashboard = () => {
           />
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              Welcome back, {selectedDog.name}!
+              {selectedDog.name}'s Dashboard
             </h1>
             <p className="text-gray-500 dark:text-gray-400">
               {selectedDog.breed} • {selectedDog.age} months old
@@ -161,15 +163,15 @@ export const Dashboard = () => {
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Today's Goals */}
+        {/* Next Goals */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
               <Target className="h-5 w-5 mr-2" />
-              Today's Goals
+              Next Goals
             </CardTitle>
             <CardDescription>
-              Focus on these socialization goals today
+              Focus on these socialisation goals next
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -181,9 +183,9 @@ export const Dashboard = () => {
                   </div>
                 ))}
               </div>
-            ) : todaysGoals.length > 0 ? (
+            ) : nextGoals.length > 0 ? (
               <div className="space-y-3">
-                {todaysGoals.map((goal) => (
+                {nextGoals.map((goal) => (
                   <GoalItem
                     key={goal.id}
                     goal={goal}
@@ -198,11 +200,11 @@ export const Dashboard = () => {
                   All goals completed!
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400">
-                  Great job! Consider adding new goals to continue progress.
+                  Great job! Visit the Goals page to review your progress.
                 </p>
-                <Button className="mt-4" variant="outline">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add New Goal
+                <Button className="mt-4" variant="outline" onClick={() => navigate('/goals')}>
+                  <Target className="h-4 w-4 mr-2" />
+                  View Goals
                 </Button>
               </div>
             )}
@@ -237,7 +239,7 @@ export const Dashboard = () => {
                     session={session}
                   />
                 ))}
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full" onClick={() => navigate('/sessions')}>
                   View All Sessions
                 </Button>
               </div>

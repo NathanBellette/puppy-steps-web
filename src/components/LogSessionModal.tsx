@@ -3,6 +3,7 @@ import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { useSessions } from '@/hooks/useSessions';
+import { useToast } from '@/context/ToastContext';
 import { SessionType, SESSION_TYPE_EMOJI, SESSION_CATEGORIES, ReactionLevel, REACTION_LABELS } from '@/types';
 import { X } from 'lucide-react';
 
@@ -13,28 +14,32 @@ interface LogSessionModalProps {
   dogName: string;
 }
 
-const reactionLevels: ReactionLevel[] = ['😍', '😊', '😐', '😟', '😰'];
+const reactionLevels: ReactionLevel[] = ['😰', '😟', '😐', '😊', '😍'];
 
 export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionModalProps) => {
   const { createSession, isCreating } = useSessions(dogId);
+  const { showToast } = useToast();
   const [selectedType, setSelectedType] = useState<SessionType>('people');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedReaction, setSelectedReaction] = useState<ReactionLevel>('😊');
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState<string>('');
   const [photo, setPhoto] = useState<File | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Reset category when type changes
   const handleTypeChange = (type: SessionType) => {
     setSelectedType(type);
     setSelectedCategory(''); // Reset category when type changes
+    setFormError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     
     if (!selectedCategory) {
-      alert('Please select a category');
+      setFormError('Please select a category');
       return;
     }
 
@@ -56,10 +61,12 @@ export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionM
       setDate(new Date().toISOString().split('T')[0]);
       setNotes('');
       setPhoto(null);
+      setFormError(null);
       
       onClose();
+      showToast('Session logged successfully!', 'success');
     } catch {
-      alert('Failed to log session. Please try again.');
+      setFormError('Failed to log session. Please try again.');
     }
   };
 
@@ -73,6 +80,13 @@ export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionM
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`Log Session for ${dogName}`} className="p-8">
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Form Error */}
+        {formError && (
+          <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm">
+            {formError}
+          </div>
+        )}
+
         {/* Date */}
         <div>
           <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -120,7 +134,10 @@ export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionM
           <select
             id="category"
             value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
+            onChange={(e) => {
+              setSelectedCategory(e.target.value);
+              setFormError(null);
+            }}
             required
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100"
           >
@@ -230,4 +247,3 @@ export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionM
     </Modal>
   );
 };
-

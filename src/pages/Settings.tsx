@@ -13,21 +13,27 @@ import {
   Moon, 
   Sun, 
   LogOut, 
-  Bell, 
-  Shield, 
   Info, 
   Mail, 
-  HelpCircle,
   Plus,
-  Edit,
   Trash2,
   ChevronRight
 } from 'lucide-react';
 
+const DARK_MODE_KEY = 'puppysteps-dark-mode';
+
+function getInitialDarkMode(): boolean {
+  const stored = localStorage.getItem(DARK_MODE_KEY);
+  if (stored !== null) {
+    return stored === 'true';
+  }
+  return document.documentElement.classList.contains('dark');
+}
+
 export const Settings = () => {
   const { user, signOut } = useAuth();
-  const { dogs } = useDogs();
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { dogs, deleteDog } = useDogs();
+  const [isDarkMode, setIsDarkMode] = useState(getInitialDarkMode);
   const [showAddDogModal, setShowAddDogModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [dogToDelete, setDogToDelete] = useState<string | null>(null);
@@ -38,8 +44,14 @@ export const Settings = () => {
   };
 
   const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle('dark');
+    const newValue = !isDarkMode;
+    setIsDarkMode(newValue);
+    localStorage.setItem(DARK_MODE_KEY, String(newValue));
+    if (newValue) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   };
 
   const handleDeleteDog = (dogId: string) => {
@@ -49,7 +61,11 @@ export const Settings = () => {
 
   const confirmDeleteDog = async () => {
     if (dogToDelete) {
-      // TODO: Implement dog deletion via useDogs().deleteDog
+      try {
+        await deleteDog(dogToDelete);
+      } catch {
+        // Deletion failed silently — could add toast here later
+      }
       setShowDeleteConfirm(false);
       setDogToDelete(null);
     }
@@ -125,9 +141,6 @@ export const Settings = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button size="sm" variant="ghost">
-                      <Edit className="h-4 w-4" />
-                    </Button>
                     <Button
                       size="sm"
                       variant="ghost"
@@ -159,46 +172,6 @@ export const Settings = () => {
           <CardDescription>Customize your experience</CardDescription>
         </CardHeader>
         <CardContent className="space-y-1">
-          <SettingsListItem
-            icon={Bell}
-            iconColor="text-orange-600 dark:text-orange-400"
-            label="Notifications"
-            expandable
-            expanded={expandedSection === 'notifications'}
-            onClick={() => toggleSection('notifications')}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-gray-700 dark:text-gray-300">Goal reminders</span>
-              <input type="checkbox" className="rounded" defaultChecked />
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-700 dark:text-gray-300">Session reminders</span>
-              <input type="checkbox" className="rounded" defaultChecked />
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-700 dark:text-gray-300">Progress updates</span>
-              <input type="checkbox" className="rounded" />
-            </div>
-          </SettingsListItem>
-
-          <SettingsListItem
-            icon={Shield}
-            iconColor="text-green-600 dark:text-green-400"
-            label="Privacy & Security"
-            expandable
-            expanded={expandedSection === 'privacy'}
-            onClick={() => toggleSection('privacy')}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-gray-700 dark:text-gray-300">Share usage data</span>
-              <input type="checkbox" className="rounded" />
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-700 dark:text-gray-300">Enable analytics</span>
-              <input type="checkbox" className="rounded" />
-            </div>
-          </SettingsListItem>
-
           <SettingsListItem
             icon={isDarkMode ? Moon : Sun}
             iconColor={isDarkMode ? 'text-purple-600 dark:text-purple-400' : 'text-yellow-600 dark:text-yellow-400'}
@@ -241,14 +214,6 @@ export const Settings = () => {
             iconColor="text-purple-600 dark:text-purple-400"
             label="Contact Support"
             onClick={() => window.location.href = 'mailto:support@puppysteps.app'}
-            rightContent={<ChevronRight className="h-5 w-5 text-gray-400" />}
-          />
-
-          <SettingsListItem
-            icon={HelpCircle}
-            iconColor="text-orange-600 dark:text-orange-400"
-            label="Help Center"
-            onClick={() => { /* TODO: Open help center */ }}
             rightContent={<ChevronRight className="h-5 w-5 text-gray-400" />}
           />
         </CardContent>

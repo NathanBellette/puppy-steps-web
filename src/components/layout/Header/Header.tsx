@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Menu, Bell, User } from 'lucide-react';
+import { Menu, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDogs } from '@/hooks/useDogProfile';
 import { DogAvatar } from '@/components/ui/DogAvatar';
@@ -12,7 +11,6 @@ export interface HeaderProps {
 export const Header = ({ onMenuClick }: HeaderProps) => {
   const { user } = useAuth();
   const { dogs, selectedDog, setSelectedDog } = useDogs();
-  const [showNotifications, setShowNotifications] = useState(false);
 
   const handleDogChange = (dogId: string) => {
     const dog = dogs.find(d => d.id === dogId);
@@ -67,28 +65,6 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
 
         {/* Right side */}
         <div className="flex items-center space-x-4">
-          {/* Notifications */}
-          <div className="relative">
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-800"
-            >
-              <Bell className="h-6 w-6" />
-              <span className="sr-only">View notifications</span>
-            </button>
-            
-            {/* Notification dropdown */}
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
-                <div className="py-1">
-                  <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                    No new notifications
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* User menu */}
           <div className="relative">
             <div className="flex items-center space-x-3">

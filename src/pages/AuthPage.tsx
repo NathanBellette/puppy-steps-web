@@ -24,11 +24,12 @@ type SignInForm = z.infer<typeof signInSchema>;
 type SignUpForm = z.infer<typeof signUpSchema>;
 
 export const AuthPage = () => {
-  const { user, signIn, signUp } = useAuth();
+  const { user, signIn, signUp, resetPassword } = useAuth();
   const location = useLocation();
   const [isSignUp, setIsSignUp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resetSent, setResetSent] = useState(false);
 
   const from = location.state?.from?.pathname || '/dashboard';
 
@@ -207,6 +208,36 @@ export const AuthPage = () => {
                     </p>
                   )}
                 </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const email = signInForm.getValues('email');
+                      if (!email) {
+                        setError('Please enter your email address first');
+                        return;
+                      }
+                      setError(null);
+                      setResetSent(false);
+                      try {
+                        await resetPassword(email);
+                        setResetSent(true);
+                      } catch (err) {
+                        setError(err instanceof Error ? err.message : 'Failed to send reset email');
+                      }
+                    }}
+                    className="text-sm text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+
+                {resetSent && (
+                  <div className="p-3 rounded-md bg-green-50 border border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400 text-sm">
+                    Password reset email sent. Check your inbox.
+                  </div>
+                )}
 
                 <Button
                   type="submit"

@@ -4,7 +4,6 @@ import {
   LayoutDashboard, 
   Target, 
   Calendar, 
-  BarChart3, 
   BookOpen, 
   Settings,
   X,
@@ -23,7 +22,6 @@ const navigation = [
   { name: 'Goals', href: '/goals', icon: Target },
   { name: 'Sessions', href: '/sessions', icon: Activity },
   { name: 'Calendar', href: '/calendar', icon: Calendar },
-  { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Resources', href: '/resources', icon: BookOpen },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];

@@ -6,10 +6,12 @@ import {
   createDog, 
   updateDog, 
   deleteDog,
-  getDog 
+  getDog,
+  createGoalsBatch,
 } from '@/lib/firestore';
 import { uploadDogPhoto } from '@/lib/storage';
 import { Dog, DogFormData } from '@/types';
+import { createInitialGoalsForDog } from '@/types/goal';
 
 const SELECTED_DOG_KEY = 'selectedDogId';
 
@@ -72,14 +74,25 @@ export const useDogs = () => {
       }
 
       const { photo: _photo, ...data } = dogData;
-      return createDog({
+      const dogId = await createDog({
         ...data,
         userId: user!.uid,
         photoUrl,
       });
+
+      // Auto-create predefined goals for the new dog
+      try {
+        const initialGoals = createInitialGoalsForDog(dogId, user!.uid);
+        await createGoalsBatch(initialGoals);
+      } catch {
+        // Goals creation failed — non-critical, user can still create later
+      }
+
+      return dogId;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dogs', user?.uid] });
+      queryClient.invalidateQueries({ queryKey: ['goals', user?.uid] });
     },
   });
 
