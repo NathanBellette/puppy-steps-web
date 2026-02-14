@@ -5,6 +5,7 @@ import {
   CardTitle, 
   CardDescription, 
   CardContent, 
+  CardFooter 
 } from './Card';
 
 describe('Card Components', () => {
@@ -88,6 +89,19 @@ describe('Card Components', () => {
     });
   });
 
+  describe('CardFooter', () => {
+    it('renders with correct styling', () => {
+      render(<CardFooter data-testid="footer">Footer content</CardFooter>);
+      const footer = screen.getByTestId('footer');
+      expect(footer).toHaveClass('flex', 'items-center', 'p-6', 'pt-0');
+    });
+
+    it('renders footer content correctly', () => {
+      render(<CardFooter>Footer text</CardFooter>);
+      expect(screen.getByText('Footer text')).toBeInTheDocument();
+    });
+  });
+
   describe('Complete Card Structure', () => {
     it('renders a complete card with all components', () => {
       render(
@@ -99,6 +113,9 @@ describe('Card Components', () => {
           <CardContent>
             <p>This is the main content of the card.</p>
           </CardContent>
+          <CardFooter>
+            <button>Action Button</button>
+          </CardFooter>
         </Card>
       );
 
@@ -106,6 +123,7 @@ describe('Card Components', () => {
       expect(screen.getByText('Test Card')).toBeInTheDocument();
       expect(screen.getByText('This is a test card description')).toBeInTheDocument();
       expect(screen.getByText('This is the main content of the card.')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /action button/i })).toBeInTheDocument();
     });
   });
 });

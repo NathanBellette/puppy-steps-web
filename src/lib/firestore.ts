@@ -4,6 +4,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  getDoc,
   getDocs,
   query,
   where,
@@ -111,6 +112,19 @@ export const deleteDocument = async (collectionName: string, id: string): Promis
   await deleteDoc(docRef);
 };
 
+export const getDocument = async <T>(
+  collectionName: string,
+  id: string
+): Promise<T | null> => {
+  const docRef = doc(db, collectionName, id);
+  const docSnap = await getDoc(docRef);
+  
+  if (docSnap.exists()) {
+    return convertTimestamps<T>({ id: docSnap.id, ...docSnap.data() });
+  }
+  return null;
+};
+
 export const getDocuments = async <T>(
   collectionName: string,
   constraints: QueryConstraint[] = []
@@ -137,6 +151,10 @@ export const deleteDog = async (id: string): Promise<void> => {
   return deleteDocument(COLLECTIONS.DOGS, id);
 };
 
+export const getDog = async (id: string): Promise<Dog | null> => {
+  return getDocument<Dog>(COLLECTIONS.DOGS, id);
+};
+
 export const getUserDogs = async (userId: string): Promise<Dog[]> => {
   return getDocuments<Dog>(COLLECTIONS.DOGS, [
     where('userId', '==', userId),
@@ -157,6 +175,10 @@ export const updateSession = async (id: string, data: Partial<Omit<Session, 'id'
 
 export const deleteSession = async (id: string): Promise<void> => {
   return deleteDocument(COLLECTIONS.SESSIONS, id);
+};
+
+export const getSession = async (id: string): Promise<Session | null> => {
+  return getDocument<Session>(COLLECTIONS.SESSIONS, id);
 };
 
 export const getUserSessions = async (
@@ -204,6 +226,10 @@ export const deleteGoal = async (id: string): Promise<void> => {
   return deleteDocument(COLLECTIONS.GOALS, id);
 };
 
+export const getGoal = async (id: string): Promise<Goal | null> => {
+  return getDocument<Goal>(COLLECTIONS.GOALS, id);
+};
+
 export const getUserGoals = async (userId: string, dogId?: string): Promise<Goal[]> => {
   const constraints: QueryConstraint[] = [
     where('userId', '==', userId),
@@ -217,6 +243,17 @@ export const getUserGoals = async (userId: string, dogId?: string): Promise<Goal
   constraints.push(limit(DEFAULT_QUERY_LIMIT));
 
   return getDocuments<Goal>(COLLECTIONS.GOALS, constraints);
+};
+
+export const getUserGoalsByCategory = async (userId: string, dogId?: string): Promise<Record<string, Goal[]>> => {
+  const goals = await getUserGoals(userId, dogId);
+  return goals.reduce((acc, goal) => {
+    if (!acc[goal.category]) {
+      acc[goal.category] = [];
+    }
+    acc[goal.category].push(goal);
+    return acc;
+  }, {} as Record<string, Goal[]>);
 };
 
 // --- Batch operations ---

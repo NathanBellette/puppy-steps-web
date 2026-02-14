@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { SegmentedControl } from '@/components/ui/SegmentedControl';
-import { cn } from '@/lib/utils';
 import { BookOpen, ExternalLink, FileText, Book, Mail } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type ResourceCategory = 'General' | 'People' | 'Dogs' | 'Environments' | 'Noises';
 type ResourceType = 'article' | 'guide' | 'tool';
@@ -130,13 +129,7 @@ export const Resources = () => {
     }
   };
 
-  const categoryItems: Array<{ value: ResourceCategory; label: string; emoji: string }> = [
-    { value: 'General', label: 'General', emoji: categoryEmoji.General },
-    { value: 'People', label: 'People', emoji: categoryEmoji.People },
-    { value: 'Dogs', label: 'Dogs', emoji: categoryEmoji.Dogs },
-    { value: 'Environments', label: 'Environments', emoji: categoryEmoji.Environments },
-    { value: 'Noises', label: 'Noises', emoji: categoryEmoji.Noises },
-  ];
+  const categories: ResourceCategory[] = ['General', 'People', 'Dogs', 'Environments', 'Noises'];
   const filteredResources = resources.filter(r => r.category === selectedCategory);
 
   return (
@@ -151,11 +144,23 @@ export const Resources = () => {
       </div>
 
       {/* Category Selector */}
-      <SegmentedControl
-        items={categoryItems}
-        value={selectedCategory}
-        onChange={setSelectedCategory}
-      />
+      <div className="flex flex-wrap gap-2">
+        {categories.map((category) => (
+          <button
+            key={category}
+            onClick={() => setSelectedCategory(category)}
+            className={cn(
+              'px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2',
+              selectedCategory === category
+                ? 'bg-primary-500 text-white shadow-md'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+            )}
+          >
+            <span className="text-lg">{categoryEmoji[category]}</span>
+            <span>{category}</span>
+          </button>
+        ))}
+      </div>
 
       {/* Resources Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
