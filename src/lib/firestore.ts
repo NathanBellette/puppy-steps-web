@@ -81,7 +81,6 @@ function convertTimestamps<T>(data: DocumentData): T {
 
 // --- Generic CRUD operations ---
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const createDocument = async <T extends Record<string, any>>(
   collectionName: string,
   data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>
@@ -95,7 +94,6 @@ export const createDocument = async <T extends Record<string, any>>(
   return docRef.id;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const updateDocument = async <T extends Record<string, any>>(
   collectionName: string,
   id: string,
