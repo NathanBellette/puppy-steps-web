@@ -1,17 +1,13 @@
-import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
 import { 
   getUserGoals, 
-  getUserGoalsByCategory,
   createGoal, 
   updateGoal, 
   deleteGoal,
-  getGoal,
   createGoalsBatch,
 } from '@/lib/firestore';
 import { Goal, GoalFormData, createInitialGoalsForDog } from '@/types';
-import { computeGoalStats } from '@/services/goalStats';
 
 export const useGoals = (dogId?: string) => {
   const { user } = useAuth();
@@ -104,32 +100,3 @@ export const useGoals = (dogId?: string) => {
   };
 };
 
-export const useGoalsByCategory = (dogId?: string) => {
-  const { user } = useAuth();
-
-  return useQuery({
-    queryKey: ['goalsByCategory', user?.uid, dogId],
-    queryFn: () => getUserGoalsByCategory(user!.uid, dogId),
-    enabled: !!user,
-  });
-};
-
-export const useGoal = (goalId: string) => {
-  const { user } = useAuth();
-
-  return useQuery({
-    queryKey: ['goal', goalId],
-    queryFn: () => getGoal(goalId),
-    enabled: !!user && !!goalId,
-  });
-};
-
-/**
- * Derives goal stats from the goals list using a pure computation function.
- * Shares the React Query cache with useGoals.
- */
-export const useGoalStats = (dogId?: string) => {
-  const { goals, isLoading } = useGoals(dogId);
-  const stats = useMemo(() => computeGoalStats(goals), [goals]);
-  return { stats, isLoading };
-};

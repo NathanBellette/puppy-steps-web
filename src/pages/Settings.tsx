@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { DogAvatar } from '@/components/ui/DogAvatar';
-import { Modal } from '@/components/ui/Modal';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { AddDogModal } from '@/components/AddDogModal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SettingsListItem } from '@/components/ui/SettingsListItem';
@@ -244,33 +244,14 @@ export const Settings = () => {
       />
 
       {/* Delete Confirmation Modal */}
-      <Modal
+      <ConfirmModal
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDeleteDog}
         title="Delete Dog"
-      >
-        <div className="space-y-4">
-          <p className="text-slate-600 dark:text-slate-400">
-            Are you sure you want to delete this dog? This action cannot be undone and will also delete all associated socialisation sessions.
-          </p>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteConfirm(false)}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={confirmDeleteDog}
-              className="flex-1"
-            >
-              Delete
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        description="Are you sure you want to delete this dog? This action cannot be undone and will also delete all associated socialisation sessions."
+        confirmLabel="Delete"
+      />
     </div>
   );
 };

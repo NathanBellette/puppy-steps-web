@@ -1,22 +1,24 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { SessionItem } from '@/components/ui/SessionItem';
+import { SkeletonList } from '@/components/ui/SkeletonList';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { LogSessionModal } from '@/components/LogSessionModal';
 import { useDogs } from '@/hooks/useDogProfile';
 import { useSessions } from '@/hooks/useSessions';
 import { useToast } from '@/context/ToastContext';
 import { SessionType, SESSION_TYPE_EMOJI } from '@/types';
-import { cn } from '@/lib/utils';
 import { Plus, Calendar, Target } from 'lucide-react';
 
-const TYPE_FILTERS: Array<{ label: string; value: SessionType | 'all'; emoji: string }> = [
-  { label: 'All', value: 'all', emoji: '📋' },
-  { label: 'People', value: 'people', emoji: SESSION_TYPE_EMOJI.people },
-  { label: 'Dogs', value: 'dogs', emoji: SESSION_TYPE_EMOJI.dogs },
-  { label: 'Environments', value: 'environments', emoji: SESSION_TYPE_EMOJI.environments },
-  { label: 'Noises', value: 'noises', emoji: SESSION_TYPE_EMOJI.noises },
+const TYPE_FILTERS = [
+  { label: 'All', value: 'all' as const, emoji: '📋' },
+  { label: 'People', value: 'people' as const, emoji: SESSION_TYPE_EMOJI.people },
+  { label: 'Dogs', value: 'dogs' as const, emoji: SESSION_TYPE_EMOJI.dogs },
+  { label: 'Environments', value: 'environments' as const, emoji: SESSION_TYPE_EMOJI.environments },
+  { label: 'Noises', value: 'noises' as const, emoji: SESSION_TYPE_EMOJI.noises },
 ];
 
 export const Sessions = () => {
@@ -47,14 +49,12 @@ export const Sessions = () => {
     return (
       <div className="flex items-center justify-center min-h-96">
         <Card className="w-full max-w-md">
-          <CardContent className="text-center py-8">
-            <Target className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
-              No Dog Selected
-            </h3>
-            <p className="text-slate-500 dark:text-slate-400 mb-4">
-              Please select a dog to view and log their socialization sessions.
-            </p>
+          <CardContent>
+            <EmptyState
+              icon={Target}
+              title="No Dog Selected"
+              description="Please select a dog to view and log their socialization sessions."
+            />
           </CardContent>
         </Card>
       </div>
@@ -79,23 +79,11 @@ export const Sessions = () => {
       </div>
 
       {/* Type Filter */}
-      <div className="flex flex-wrap gap-2">
-        {TYPE_FILTERS.map((filter) => (
-          <button
-            key={filter.value}
-            onClick={() => setTypeFilter(filter.value)}
-            className={cn(
-              'px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2',
-              typeFilter === filter.value
-                ? 'bg-primary-500 text-white shadow-md'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-            )}
-          >
-            <span className="text-lg">{filter.emoji}</span>
-            <span>{filter.label}</span>
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        items={TYPE_FILTERS}
+        value={typeFilter}
+        onChange={setTypeFilter}
+      />
 
       <Card>
         <CardHeader>
@@ -110,13 +98,7 @@ export const Sessions = () => {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="h-20 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
-                </div>
-              ))}
-            </div>
+            <SkeletonList count={5} />
           ) : filteredSessions.length > 0 ? (
             <div className="space-y-3">
               {filteredSessions.map((session) => (
@@ -158,34 +140,15 @@ export const Sessions = () => {
       />
 
       {/* Delete Confirmation Modal */}
-      <Modal
+      <ConfirmModal
         isOpen={deleteConfirmId !== null}
         onClose={() => setDeleteConfirmId(null)}
+        onConfirm={handleDelete}
         title="Delete Session"
-      >
-        <div className="space-y-4">
-          <p className="text-slate-600 dark:text-slate-400">
-            Are you sure you want to delete this session? This action cannot be undone.
-          </p>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setDeleteConfirmId(null)}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="flex-1"
-            >
-              {isDeleting ? 'Deleting...' : 'Delete'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        description="Are you sure you want to delete this session? This action cannot be undone."
+        confirmLabel="Delete"
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

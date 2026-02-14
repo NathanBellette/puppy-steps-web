@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
+import { Spinner } from './ui/Spinner';
 import { useDogs } from '@/hooks/useDogProfile';
 import { X } from 'lucide-react';
 
@@ -77,8 +78,8 @@ export const AddDogModal = ({ isOpen, onClose }: AddDogModalProps) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Add Dog Profile" className="p-8">
-      <form onSubmit={handleSubmit} className="space-y-5">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Add Dog Profile">
+      <form onSubmit={handleSubmit} className="space-y-5 px-6 pb-6">
         {error && (
           <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm">
             {error}
@@ -183,7 +184,7 @@ export const AddDogModal = ({ isOpen, onClose }: AddDogModalProps) => {
           >
             {isCreating ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                <Spinner className="mr-2" />
                 Adding...
               </>
             ) : (

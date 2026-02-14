@@ -1,5 +1,5 @@
-import { cn, formatDateTime, getReactionEmoji, getReactionLabel, capitalizeFirst } from '@/lib/utils';
-import { Session, SessionType } from '@/types';
+import { cn, formatDateTime, capitalizeFirst } from '@/lib/utils';
+import { Session, SessionType, REACTION_LABELS, ReactionLevel } from '@/types';
 import { Calendar, MapPin, Users, Volume2, Edit, Trash2 } from 'lucide-react';
 
 export interface SessionItemProps {
@@ -89,10 +89,10 @@ const SessionItem = ({ session, onEdit, onDelete, className }: SessionItemProps)
               </span>
             )}
             <span className={cn('text-2xl', getReactionColor(session.reaction))}>
-              {getReactionEmoji(session.reaction)}
+              {session.reaction}
             </span>
             <span className="text-sm text-slate-500 dark:text-slate-400">
-              {getReactionLabel(session.reaction)}
+              {REACTION_LABELS[session.reaction as ReactionLevel] ?? 'Neutral'}
             </span>
           </div>
           <div className="flex items-center space-x-2">

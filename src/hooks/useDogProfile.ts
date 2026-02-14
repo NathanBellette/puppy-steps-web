@@ -6,7 +6,6 @@ import {
   createDog, 
   updateDog, 
   deleteDog,
-  getDog,
   createGoalsBatch,
 } from '@/lib/firestore';
 import { uploadDogPhoto } from '@/lib/storage';
@@ -143,12 +142,3 @@ export const useDogs = () => {
   };
 };
 
-export const useDog = (dogId: string) => {
-  const { user } = useAuth();
-
-  return useQuery({
-    queryKey: ['dog', dogId],
-    queryFn: () => getDog(dogId),
-    enabled: !!user && !!dogId,
-  });
-};
