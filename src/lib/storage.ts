@@ -5,35 +5,20 @@ export const uploadImage = async (
   file: File,
   path: string
 ): Promise<string> => {
-  try {
-    const storageRef = ref(storage, path);
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    return downloadURL;
-  } catch (error) {
-    console.error('Upload error:', error);
-    throw error;
-  }
+  const storageRef = ref(storage, path);
+  const snapshot = await uploadBytes(storageRef, file);
+  const downloadURL = await getDownloadURL(snapshot.ref);
+  return downloadURL;
 };
 
 export const deleteImage = async (path: string): Promise<void> => {
-  try {
-    const storageRef = ref(storage, path);
-    await deleteObject(storageRef);
-  } catch (error) {
-    console.error('Delete error:', error);
-    throw error;
-  }
+  const storageRef = ref(storage, path);
+  await deleteObject(storageRef);
 };
 
 export const getImageUrl = async (path: string): Promise<string> => {
-  try {
-    const storageRef = ref(storage, path);
-    return await getDownloadURL(storageRef);
-  } catch (error) {
-    console.error('Get image URL error:', error);
-    throw error;
-  }
+  const storageRef = ref(storage, path);
+  return await getDownloadURL(storageRef);
 };
 
 // Helper functions for specific use cases

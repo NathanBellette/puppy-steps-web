@@ -13,16 +13,12 @@ const SessionItem = ({ session, onEdit, onDelete, className }: SessionItemProps)
   const getSessionTypeIcon = (type: SessionType) => {
     switch (type) {
       case 'people':
-      case 'People':
         return <Users className="w-4 h-4" />;
       case 'dogs':
-      case 'Dogs':
         return <Users className="w-4 h-4" />;
       case 'environments':
-      case 'Environments':
         return <MapPin className="w-4 h-4" />;
       case 'noises':
-      case 'Noises':
         return <Volume2 className="w-4 h-4" />;
       default:
         return <Calendar className="w-4 h-4" />;
@@ -32,16 +28,12 @@ const SessionItem = ({ session, onEdit, onDelete, className }: SessionItemProps)
   const getSessionTypeColor = (type: SessionType) => {
     switch (type) {
       case 'people':
-      case 'People':
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
       case 'dogs':
-      case 'Dogs':
         return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
       case 'environments':
-      case 'Environments':
         return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
       case 'noises':
-      case 'Noises':
         return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
@@ -140,15 +132,6 @@ const SessionItem = ({ session, onEdit, onDelete, className }: SessionItemProps)
           <div className="mt-3">
             <img
               src={session.photoUrl}
-              alt="Session photo"
-              className="w-full max-w-xs h-32 object-cover rounded-lg"
-            />
-          </div>
-        )}
-        {session.photoURL && (
-          <div className="mt-3">
-            <img
-              src={session.photoURL}
               alt="Session photo"
               className="w-full max-w-xs h-32 object-cover rounded-lg"
             />

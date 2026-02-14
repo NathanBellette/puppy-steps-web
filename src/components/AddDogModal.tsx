@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
-import { useDogs as useDogProfile } from '@/hooks/useDogProfile';
-import { useDogs as useDogsContext } from '@/context/DogContext';
+import { useDogs } from '@/hooks/useDogProfile';
 import { X } from 'lucide-react';
 
 interface AddDogModalProps {
@@ -12,8 +11,7 @@ interface AddDogModalProps {
 }
 
 export const AddDogModal = ({ isOpen, onClose }: AddDogModalProps) => {
-  const { createDog, isCreating } = useDogProfile();
-  const { refetch } = useDogsContext();
+  const { createDog, isCreating } = useDogs();
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [breed, setBreed] = useState('');
@@ -47,9 +45,6 @@ export const AddDogModal = ({ isOpen, onClose }: AddDogModalProps) => {
         photo: photo || undefined,
       });
 
-      // Refresh the dog list in context
-      await refetch();
-
       // Reset form
       setName('');
       setAge('');
@@ -58,8 +53,7 @@ export const AddDogModal = ({ isOpen, onClose }: AddDogModalProps) => {
       setError('');
       
       onClose();
-    } catch (err) {
-      console.error('Failed to create dog:', err);
+    } catch {
       setError('Failed to add dog. Please try again.');
     }
   };

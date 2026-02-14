@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/Button';
 import { SessionItem } from '@/components/ui/SessionItem';
 import { LogSessionModal } from '@/components/LogSessionModal';
-import { useDogs } from '@/context/DogContext';
+import { useDogs } from '@/hooks/useDogProfile';
 import { useSessions } from '@/hooks/useSessions';
 import { Plus, Calendar, Target } from 'lucide-react';
 

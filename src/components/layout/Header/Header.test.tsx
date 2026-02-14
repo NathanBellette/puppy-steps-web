@@ -23,7 +23,7 @@ vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({ user: mockUser }),
 }));
 
-vi.mock('@/context/DogContext', () => ({
+vi.mock('@/hooks/useDogProfile', () => ({
   useDogs: () => ({
     dogs: mockDogs,
     selectedDog: mockSelectedDog,

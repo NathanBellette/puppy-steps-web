@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Menu, Bell, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useDogs } from '@/context/DogContext';
+import { useDogs } from '@/hooks/useDogProfile';
 import { DogAvatar } from '@/components/ui/DogAvatar';
 import { Select, SelectOption } from '@/components/ui/Select';
 

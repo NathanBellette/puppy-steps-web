@@ -14,12 +14,7 @@ export { auth };
 import { User, AuthUser } from '@/types';
 
 export const signIn = async (email: string, password: string): Promise<void> => {
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch (error) {
-    console.error('Sign in error:', error);
-    throw error;
-  }
+  await signInWithEmailAndPassword(auth, email, password);
 };
 
 export const signUp = async (
@@ -27,74 +22,49 @@ export const signUp = async (
   password: string,
   displayName?: string
 ): Promise<void> => {
-  try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
+  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+  const user = userCredential.user;
 
-    // Update display name
-    if (displayName) {
-      await updateProfile(user, { displayName });
-    }
-
-    // Create user document in Firestore
-    const userData: Omit<User, 'id'> = {
-      email: user.email!,
-      displayName: displayName ?? user.displayName ?? undefined,
-      photoURL: user.photoURL ?? undefined,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      preferences: {
-        theme: 'system',
-        notifications: true,
-      },
-    };
-
-    await setDoc(doc(db, 'users', user.uid), userData);
-  } catch (error) {
-    console.error('Sign up error:', error);
-    throw error;
+  // Update display name
+  if (displayName) {
+    await updateProfile(user, { displayName });
   }
+
+  // Create user document in Firestore
+  const userData: Omit<User, 'id'> = {
+    email: user.email!,
+    displayName: displayName ?? user.displayName ?? undefined,
+    photoURL: user.photoURL ?? undefined,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    preferences: {
+      theme: 'system',
+      notifications: true,
+    },
+  };
+
+  await setDoc(doc(db, 'users', user.uid), userData);
 };
 
 export const signOut = async (): Promise<void> => {
-  try {
-    await firebaseSignOut(auth);
-  } catch (error) {
-    console.error('Sign out error:', error);
-    throw error;
-  }
+  await firebaseSignOut(auth);
 };
 
 export const resetPassword = async (email: string): Promise<void> => {
-  try {
-    await sendPasswordResetEmail(auth, email);
-  } catch (error) {
-    console.error('Password reset error:', error);
-    throw error;
-  }
+  await sendPasswordResetEmail(auth, email);
 };
 
 export const getUserData = async (uid: string): Promise<User | null> => {
-  try {
-    const userDoc = await getDoc(doc(db, 'users', uid));
-    if (userDoc.exists()) {
-      return { id: uid, ...userDoc.data() } as User;
-    }
-    return null;
-  } catch (error) {
-    console.error('Get user data error:', error);
-    throw error;
+  const userDoc = await getDoc(doc(db, 'users', uid));
+  if (userDoc.exists()) {
+    return { id: uid, ...userDoc.data() } as User;
   }
+  return null;
 };
 
 export const updateUserData = async (uid: string, data: Partial<User>): Promise<void> => {
-  try {
-    const userRef = doc(db, 'users', uid);
-    await setDoc(userRef, { ...data, updatedAt: new Date() }, { merge: true });
-  } catch (error) {
-    console.error('Update user data error:', error);
-    throw error;
-  }
+  const userRef = doc(db, 'users', uid);
+  await setDoc(userRef, { ...data, updatedAt: new Date() }, { merge: true });
 };
 
 // Convert Firebase user to our AuthUser type

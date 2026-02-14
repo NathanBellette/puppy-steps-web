@@ -9,10 +9,19 @@ import {
   query,
   where,
   orderBy,
+  limit,
+  writeBatch,
+  increment,
+  Timestamp,
   QueryConstraint,
+  DocumentData,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { Dog, Session, Goal, SessionFilters } from '@/types';
+import { normalizeSessionType } from '@/types/session';
+
+// Default query limit to prevent unbounded reads
+const DEFAULT_QUERY_LIMIT = 100;
 
 // Collection names
 const COLLECTIONS = {
@@ -22,7 +31,39 @@ const COLLECTIONS = {
   USERS: 'users',
 } as const;
 
-// Generic CRUD operations
+// --- Timestamp / Document Conversion ---
+
+/**
+ * Converts Firestore Timestamps to JS Dates in a document.
+ * Also normalizes known fields (e.g., SessionType casing, photoURL -> photoUrl).
+ */
+function convertTimestamps<T>(data: DocumentData): T {
+  const converted: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value instanceof Timestamp) {
+      converted[key] = value.toDate();
+    } else {
+      converted[key] = value;
+    }
+  }
+
+  // Normalize photoURL -> photoUrl (iOS compatibility)
+  if ('photoURL' in converted && !('photoUrl' in converted)) {
+    converted['photoUrl'] = converted['photoURL'];
+    delete converted['photoURL'];
+  }
+
+  // Normalize session type casing
+  if ('type' in converted && typeof converted['type'] === 'string') {
+    converted['type'] = normalizeSessionType(converted['type'] as string);
+  }
+
+  return converted as T;
+}
+
+// --- Generic CRUD operations ---
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const createDocument = async <T extends Record<string, any>>(
   collectionName: string,
   data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>
@@ -36,6 +77,7 @@ export const createDocument = async <T extends Record<string, any>>(
   return docRef.id;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const updateDocument = async <T extends Record<string, any>>(
   collectionName: string,
   id: string,
@@ -53,12 +95,15 @@ export const deleteDocument = async (collectionName: string, id: string): Promis
   await deleteDoc(docRef);
 };
 
-export const getDocument = async <T>(collectionName: string, id: string): Promise<T | null> => {
+export const getDocument = async <T>(
+  collectionName: string,
+  id: string
+): Promise<T | null> => {
   const docRef = doc(db, collectionName, id);
   const docSnap = await getDoc(docRef);
   
   if (docSnap.exists()) {
-    return { id: docSnap.id, ...docSnap.data() } as T;
+    return convertTimestamps<T>({ id: docSnap.id, ...docSnap.data() });
   }
   return null;
 };
@@ -67,27 +112,16 @@ export const getDocuments = async <T>(
   collectionName: string,
   constraints: QueryConstraint[] = []
 ): Promise<T[]> => {
-  try {
-    console.log(`getDocuments called for collection: ${collectionName} with constraints:`, constraints);
-    const q = query(collection(db, collectionName), ...constraints);
-    console.log('Firebase query created:', q);
-    const querySnapshot = await getDocs(q);
-    console.log('Firebase querySnapshot received:', querySnapshot);
-    
-    const result = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as T[];
-    
-    console.log('getDocuments returning:', result);
-    return result;
-  } catch (error) {
-    console.error(`Error in getDocuments for collection ${collectionName}:`, error);
-    throw error;
-  }
+  const q = query(collection(db, collectionName), ...constraints);
+  const querySnapshot = await getDocs(q);
+  
+  return querySnapshot.docs.map(doc =>
+    convertTimestamps<T>({ id: doc.id, ...doc.data() })
+  );
 };
 
-// Dog-specific operations
+// --- Dog-specific operations ---
+
 export const createDog = async (dogData: Omit<Dog, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
   return createDocument<Dog>(COLLECTIONS.DOGS, dogData);
 };
@@ -108,10 +142,12 @@ export const getUserDogs = async (userId: string): Promise<Dog[]> => {
   return getDocuments<Dog>(COLLECTIONS.DOGS, [
     where('userId', '==', userId),
     orderBy('createdAt', 'desc'),
+    limit(DEFAULT_QUERY_LIMIT),
   ]);
 };
 
-// Session-specific operations
+// --- Session-specific operations ---
+
 export const createSession = async (sessionData: Omit<Session, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
   return createDocument<Session>(COLLECTIONS.SESSIONS, sessionData);
 };
@@ -133,7 +169,6 @@ export const getUserSessions = async (
   dogId?: string,
   filters?: SessionFilters
 ): Promise<Session[]> => {
-
   const constraints: QueryConstraint[] = [
     where('userId', '==', userId),
     orderBy('date', 'desc'),
@@ -155,20 +190,13 @@ export const getUserSessions = async (
     constraints.push(where('date', '<=', filters.dateTo));
   }
 
-  console.log('Firebase query constraints:', constraints);
-  
-  try {
-    const result = await getDocuments<Session>(COLLECTIONS.SESSIONS, constraints);
-    console.log('getDocuments returned with result: ', result);
-    console.log('Firebase query result:', result);
-    return result;
-  } catch (error) {
-    console.error('Error in getUserSessions:', error);
-    throw error;
-  }
+  constraints.push(limit(DEFAULT_QUERY_LIMIT));
+
+  return getDocuments<Session>(COLLECTIONS.SESSIONS, constraints);
 };
 
-// Goal-specific operations
+// --- Goal-specific operations ---
+
 export const createGoal = async (goalData: Omit<Goal, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
   return createDocument<Goal>(COLLECTIONS.GOALS, goalData);
 };
@@ -195,6 +223,8 @@ export const getUserGoals = async (userId: string, dogId?: string): Promise<Goal
     constraints.push(where('dogId', '==', dogId));
   }
 
+  constraints.push(limit(DEFAULT_QUERY_LIMIT));
+
   return getDocuments<Goal>(COLLECTIONS.GOALS, constraints);
 };
 
@@ -207,4 +237,53 @@ export const getUserGoalsByCategory = async (userId: string, dogId?: string): Pr
     acc[goal.category].push(goal);
     return acc;
   }, {} as Record<string, Goal[]>);
+};
+
+// --- Batch operations ---
+
+/**
+ * Creates multiple goals in a single atomic batch write.
+ * Firestore batch limit is 500 writes.
+ */
+export const createGoalsBatch = async (
+  goalsData: Omit<Goal, 'id' | 'createdAt' | 'updatedAt'>[]
+): Promise<void> => {
+  const batch = writeBatch(db);
+  const now = new Date();
+
+  for (const goalData of goalsData) {
+    const docRef = doc(collection(db, COLLECTIONS.GOALS));
+    batch.set(docRef, {
+      ...goalData,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  await batch.commit();
+};
+
+/**
+ * Atomically increments a goal's currentCount and auto-completes if target reached.
+ * Uses Firestore's atomic increment() to avoid stale state issues.
+ */
+export const incrementGoalCount = async (goalId: string): Promise<void> => {
+  const docRef = doc(db, COLLECTIONS.GOALS, goalId);
+
+  // First, read the current state to check if we should auto-complete
+  const goalSnap = await getDoc(docRef);
+  if (!goalSnap.exists()) {
+    throw new Error('Goal not found');
+  }
+
+  const goalData = goalSnap.data();
+  const newCount = (goalData.currentCount || 0) + 1;
+  const shouldComplete = newCount >= (goalData.targetCount || 1);
+
+  await updateDoc(docRef, {
+    currentCount: increment(1),
+    isCompleted: shouldComplete,
+    ...(shouldComplete ? { completedDate: new Date() } : {}),
+    updatedAt: new Date(),
+  });
 };

@@ -58,8 +58,7 @@ export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionM
       setPhoto(null);
       
       onClose();
-    } catch (error) {
-      console.error('Failed to create session:', error);
+    } catch {
       alert('Failed to log session. Please try again.');
     }
   };

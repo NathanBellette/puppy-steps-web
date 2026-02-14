@@ -10,11 +10,11 @@ vi.mock('@/lib/utils', () => ({
   getReactionEmoji: (reaction: string) => reaction,
   getReactionLabel: (reaction: string) => {
     const labels: Record<string, string> = {
-      '😰': 'Very Scared',
-      '😟': 'Scared',
+      '😰': 'Very Negative',
+      '😟': 'Negative',
       '😐': 'Neutral',
-      '😊': 'Happy',
-      '😄': 'Very Happy',
+      '😊': 'Positive',
+      '😍': 'Very Positive',
     };
     return labels[reaction] || reaction;
   },
@@ -48,7 +48,7 @@ describe('SessionItem', () => {
     
     expect(screen.getByText('People')).toBeInTheDocument();
     expect(screen.getByText('😊')).toBeInTheDocument();
-    expect(screen.getByText('Happy')).toBeInTheDocument();
+    expect(screen.getByText('Positive')).toBeInTheDocument();
     expect(screen.getByText('Met a friendly stranger')).toBeInTheDocument();
   });
 
@@ -69,15 +69,15 @@ describe('SessionItem', () => {
   it('renders different reaction levels correctly', () => {
     const { rerender } = render(<SessionItem session={mockSession} />);
     expect(screen.getByText('😊')).toBeInTheDocument();
-    expect(screen.getByText('Happy')).toBeInTheDocument();
+    expect(screen.getByText('Positive')).toBeInTheDocument();
 
     rerender(<SessionItem session={{ ...mockSession, reaction: '😰' }} />);
     expect(screen.getByText('😰')).toBeInTheDocument();
-    expect(screen.getByText('Very Scared')).toBeInTheDocument();
+    expect(screen.getByText('Very Negative')).toBeInTheDocument();
 
-    rerender(<SessionItem session={{ ...mockSession, reaction: '😄' }} />);
-    expect(screen.getByText('😄')).toBeInTheDocument();
-    expect(screen.getByText('Very Happy')).toBeInTheDocument();
+    rerender(<SessionItem session={{ ...mockSession, reaction: '😍' }} />);
+    expect(screen.getByText('😍')).toBeInTheDocument();
+    expect(screen.getByText('Very Positive')).toBeInTheDocument();
   });
 
   it('renders formatted date', () => {

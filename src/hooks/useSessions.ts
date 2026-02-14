@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
 import { 
@@ -8,7 +9,8 @@ import {
   getSession 
 } from '@/lib/firestore';
 import { uploadSessionPhoto } from '@/lib/storage';
-import { SessionFormData, SessionFilters, Session } from '@/types';
+import { SessionFormData, SessionFilters } from '@/types';
+import { computeSessionStats } from '@/services/sessionStats';
 
 export const useSessions = (dogId?: string, filters?: SessionFilters) => {
   const { user } = useAuth();
@@ -20,10 +22,7 @@ export const useSessions = (dogId?: string, filters?: SessionFilters) => {
     refetch
   } = useQuery({
     queryKey: ['sessions', user?.uid, dogId, filters],
-    queryFn: () => {
-      console.log('Fetching sessions for user:', user?.uid, 'dogId:', dogId, 'filters:', filters);
-      return getUserSessions(user!.uid, dogId, filters);
-    },
+    queryFn: () => getUserSessions(user!.uid, dogId, filters),
     enabled: !!user,
   });
 
@@ -103,32 +102,6 @@ export const useSession = (sessionId: string) => {
   });
 };
 
-export const useSessionStats = (dogId?: string) => {
-  const { sessions, isLoading } = useSessions(dogId);
-
-  const stats = {
-    totalSessions: sessions.length,
-    sessionsByType: {
-      people: sessions.filter((s: Session) => s.type === 'people' || s.type === 'People').length,
-      dogs: sessions.filter((s: Session) => s.type === 'dogs' || s.type === 'Dogs').length,
-      environments: sessions.filter((s: Session) => s.type === 'environments' || s.type === 'Environments').length,
-      noises: sessions.filter((s: Session) => s.type === 'noises' || s.type === 'Noises').length,
-    },
-    averageReaction: sessions.length > 0 
-      ? sessions.reduce((sum: number, s: Session) => {
-          const reactionValues = { '😰': 1, '😟': 2, '😐': 3, '😊': 4, '😍': 5 };
-          return sum + (reactionValues[s.reaction as keyof typeof reactionValues] || 3);
-        }, 0) / sessions.length
-      : 3,
-    recentSessions: sessions.slice(0, 5),
-  };
-
-  return {
-    stats,
-    isLoading,
-  };
-};
-
 export const useSessionsByDate = (dogId?: string, startDate?: Date, endDate?: Date) => {
   const filters: SessionFilters = {
     dogId,
@@ -137,4 +110,14 @@ export const useSessionsByDate = (dogId?: string, startDate?: Date, endDate?: Da
   };
 
   return useSessions(dogId, filters);
+};
+
+/**
+ * Derives session stats from the sessions list using a pure computation function.
+ * Shares the React Query cache with useSessions.
+ */
+export const useSessionStats = (dogId?: string) => {
+  const { sessions, isLoading } = useSessions(dogId);
+  const stats = useMemo(() => computeSessionStats(sessions), [sessions]);
+  return { stats, isLoading };
 };

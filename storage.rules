@@ -1,0 +1,56 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper: check that the request is from an authenticated user
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper: validate file size (max 5MB)
+    function isValidFileSize() {
+      return request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // Helper: validate image content type
+    function isImageContentType() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    // Dog photos: /dogs/{userId}/{dogId}/{filename}
+    match /dogs/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow write: if isAuthenticated()
+        && request.auth.uid == userId
+        && isValidFileSize()
+        && isImageContentType();
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Session photos: /sessions/{userId}/{sessionId}/{filename}
+    match /sessions/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow write: if isAuthenticated()
+        && request.auth.uid == userId
+        && isValidFileSize()
+        && isImageContentType();
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // User avatars: /avatars/{userId}/{filename}
+    match /avatars/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow write: if isAuthenticated()
+        && request.auth.uid == userId
+        && isValidFileSize()
+        && isImageContentType();
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Deny all other access by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -2,24 +2,25 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { GoalItem } from '@/components/ui/GoalItem';
-import { useDogs } from '@/context/DogContext';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { useDogs } from '@/hooks/useDogProfile';
 import { useGoals } from '@/hooks/useGoals';
 import { SessionType, SESSION_TYPE_EMOJI } from '@/types';
 import { Target, AlertCircle, Plus } from 'lucide-react';
-import { cn } from '@/lib/utils';
-
-const sessionTypes: SessionType[] = ['people', 'dogs', 'environments', 'noises'];
 
 const typeLabels: Record<SessionType, string> = {
   people: 'People',
   dogs: 'Dogs',
   environments: 'Environments',
   noises: 'Noises & Objects',
-  People: 'People',
-  Dogs: 'Dogs',
-  Environments: 'Environments',
-  Noises: 'Noises & Objects'
 };
+
+const segmentItems = (['people', 'dogs', 'environments', 'noises'] as SessionType[]).map(type => ({
+  value: type,
+  label: typeLabels[type],
+  emoji: SESSION_TYPE_EMOJI[type],
+}));
 
 export const Goals = () => {
   const { selectedDog } = useDogs();
@@ -36,8 +37,8 @@ export const Goals = () => {
     if (selectedDog?.id) {
       try {
         await initializeGoals(selectedDog.id);
-      } catch (error) {
-        console.error('Failed to initialize goals:', error);
+      } catch {
+        // Error is handled by React Query mutation state
       }
     }
   };
@@ -47,13 +48,11 @@ export const Goals = () => {
       <div className="flex items-center justify-center min-h-96">
         <Card className="w-full max-w-md">
           <CardContent className="text-center py-8">
-            <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-              No Dog Selected
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
-              Please select a dog to view and track their socialization goals.
-            </p>
+            <EmptyState
+              icon={Target}
+              title="No Dog Selected"
+              description="Please select a dog to view and track their socialization goals."
+            />
           </CardContent>
         </Card>
       </div>
@@ -112,23 +111,11 @@ export const Goals = () => {
       {/* Type Selector (Segmented Control) */}
       {goals.length > 0 && (
         <>
-          <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-1 inline-flex">
-            {sessionTypes.map((type) => (
-              <button
-                key={type}
-                onClick={() => setSelectedType(type)}
-                className={cn(
-                  'px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2',
-                  selectedType === type
-                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-                )}
-              >
-                <span className="text-lg">{SESSION_TYPE_EMOJI[type]}</span>
-                <span>{typeLabels[type]}</span>
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            items={segmentItems}
+            value={selectedType}
+            onChange={setSelectedType}
+          />
 
           {/* Progress Summary Card */}
           <Card>
@@ -188,15 +175,11 @@ export const Goals = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                    No Goals in This Category
-                  </h3>
-                  <p className="text-gray-500 dark:text-gray-400">
-                    Goals for {typeLabels[selectedType].toLowerCase()} will appear here.
-                  </p>
-                </div>
+                <EmptyState
+                  icon={Target}
+                  title="No Goals in This Category"
+                  description={`Goals for ${typeLabels[selectedType].toLowerCase()} will appear here.`}
+                />
               )}
             </CardContent>
           </Card>

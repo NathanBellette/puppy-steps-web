@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-// import { Input } from '@/components/ui/Input';
 import { DogAvatar } from '@/components/ui/DogAvatar';
 import { Modal } from '@/components/ui/Modal';
 import { AddDogModal } from '@/components/AddDogModal';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { SettingsListItem } from '@/components/ui/SettingsListItem';
 import { useAuth } from '@/hooks/useAuth';
-import { useDogs } from '@/context/DogContext';
+import { useDogs } from '@/hooks/useDogProfile';
 import { 
-  // Settings as SettingsIcon, 
   User, 
   Moon, 
   Sun, 
@@ -34,11 +34,7 @@ export const Settings = () => {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error('Sign out error:', error);
-    }
+    await signOut();
   };
 
   const toggleDarkMode = () => {
@@ -53,8 +49,7 @@ export const Settings = () => {
 
   const confirmDeleteDog = async () => {
     if (dogToDelete) {
-      // TODO: Implement dog deletion
-      console.log('Delete dog:', dogToDelete);
+      // TODO: Implement dog deletion via useDogs().deleteDog
       setShowDeleteConfirm(false);
       setDogToDelete(null);
     }
@@ -79,9 +74,7 @@ export const Settings = () => {
       <Card>
         <CardHeader>
           <CardTitle>Account</CardTitle>
-          <CardDescription>
-            Your account information
-          </CardDescription>
+          <CardDescription>Your account information</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
@@ -104,9 +97,7 @@ export const Settings = () => {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Your Dogs</CardTitle>
-              <CardDescription>
-                Manage your dog profiles
-              </CardDescription>
+              <CardDescription>Manage your dog profiles</CardDescription>
             </div>
             <Button size="sm" variant="outline" onClick={() => setShowAddDogModal(true)}>
               <Plus className="h-4 w-4 mr-2" />
@@ -150,16 +141,13 @@ export const Settings = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 dark:text-gray-400 mb-4">
-                No dogs added yet
-              </p>
-              <Button variant="outline" onClick={() => setShowAddDogModal(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Your First Dog
-              </Button>
-            </div>
+            <EmptyState
+              icon={User}
+              title="No dogs added yet"
+              description="Add your first dog to start tracking socialization."
+              actionLabel="Add Your First Dog"
+              onAction={() => setShowAddDogModal(true)}
+            />
           )}
         </CardContent>
       </Card>
@@ -168,110 +156,76 @@ export const Settings = () => {
       <Card>
         <CardHeader>
           <CardTitle>App Settings</CardTitle>
-          <CardDescription>
-            Customize your experience
-          </CardDescription>
+          <CardDescription>Customize your experience</CardDescription>
         </CardHeader>
         <CardContent className="space-y-1">
-          {/* Notifications */}
-          <button
+          <SettingsListItem
+            icon={Bell}
+            iconColor="text-orange-600 dark:text-orange-400"
+            label="Notifications"
+            expandable
+            expanded={expandedSection === 'notifications'}
             onClick={() => toggleSection('notifications')}
-            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
-            <div className="flex items-center gap-3">
-              <Bell className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-              <span className="font-medium text-gray-900 dark:text-gray-100">
-                Notifications
-              </span>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-700 dark:text-gray-300">Goal reminders</span>
+              <input type="checkbox" className="rounded" defaultChecked />
             </div>
-            <ChevronRight className={`h-5 w-5 text-gray-400 transition-transform ${expandedSection === 'notifications' ? 'rotate-90' : ''}`} />
-          </button>
-          {expandedSection === 'notifications' && (
-            <div className="ml-11 p-3 space-y-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-700 dark:text-gray-300">Goal reminders</span>
-                <input type="checkbox" className="rounded" defaultChecked />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-700 dark:text-gray-300">Session reminders</span>
-                <input type="checkbox" className="rounded" defaultChecked />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-700 dark:text-gray-300">Progress updates</span>
-                <input type="checkbox" className="rounded" />
-              </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-700 dark:text-gray-300">Session reminders</span>
+              <input type="checkbox" className="rounded" defaultChecked />
             </div>
-          )}
+            <div className="flex items-center justify-between">
+              <span className="text-gray-700 dark:text-gray-300">Progress updates</span>
+              <input type="checkbox" className="rounded" />
+            </div>
+          </SettingsListItem>
 
-          {/* Privacy & Security */}
-          <button
+          <SettingsListItem
+            icon={Shield}
+            iconColor="text-green-600 dark:text-green-400"
+            label="Privacy & Security"
+            expandable
+            expanded={expandedSection === 'privacy'}
             onClick={() => toggleSection('privacy')}
-            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
-            <div className="flex items-center gap-3">
-              <Shield className="h-5 w-5 text-green-600 dark:text-green-400" />
-              <span className="font-medium text-gray-900 dark:text-gray-100">
-                Privacy & Security
-              </span>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-700 dark:text-gray-300">Share usage data</span>
+              <input type="checkbox" className="rounded" />
             </div>
-            <ChevronRight className={`h-5 w-5 text-gray-400 transition-transform ${expandedSection === 'privacy' ? 'rotate-90' : ''}`} />
-          </button>
-          {expandedSection === 'privacy' && (
-            <div className="ml-11 p-3 space-y-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-700 dark:text-gray-300">Share usage data</span>
-                <input type="checkbox" className="rounded" />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-700 dark:text-gray-300">Enable analytics</span>
-                <input type="checkbox" className="rounded" />
-              </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-700 dark:text-gray-300">Enable analytics</span>
+              <input type="checkbox" className="rounded" />
             </div>
-          )}
+          </SettingsListItem>
 
-          {/* Dark Mode */}
-          <button
+          <SettingsListItem
+            icon={isDarkMode ? Moon : Sun}
+            iconColor={isDarkMode ? 'text-purple-600 dark:text-purple-400' : 'text-yellow-600 dark:text-yellow-400'}
+            label="Dark Mode"
             onClick={toggleDarkMode}
-            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              {isDarkMode ? (
-                <Moon className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              ) : (
-                <Sun className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-              )}
-              <span className="font-medium text-gray-900 dark:text-gray-100">
-                Dark Mode
+            rightContent={
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {isDarkMode ? 'On' : 'Off'}
               </span>
-            </div>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              {isDarkMode ? 'On' : 'Off'}
-            </span>
-          </button>
+            }
+          />
 
-          {/* About PuppySteps */}
-          <button
+          <SettingsListItem
+            icon={Info}
+            iconColor="text-blue-600 dark:text-blue-400"
+            label="About PuppySteps"
+            expandable
+            expanded={expandedSection === 'about'}
             onClick={() => toggleSection('about')}
-            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
-            <div className="flex items-center gap-3">
-              <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              <span className="font-medium text-gray-900 dark:text-gray-100">
-                About PuppySteps
-              </span>
-            </div>
-            <ChevronRight className={`h-5 w-5 text-gray-400 transition-transform ${expandedSection === 'about' ? 'rotate-90' : ''}`} />
-          </button>
-          {expandedSection === 'about' && (
-            <div className="ml-11 p-3 text-sm space-y-2">
-              <p className="text-gray-700 dark:text-gray-300">
-                Version 1.0.0
-              </p>
-              <p className="text-gray-500 dark:text-gray-400">
-                Helping you raise well-socialized, happy puppies! 🐾
-              </p>
-            </div>
-          )}
+            <p className="text-gray-700 dark:text-gray-300">
+              Version 1.0.0
+            </p>
+            <p className="text-gray-500 dark:text-gray-400">
+              Helping you raise well-socialized, happy puppies!
+            </p>
+          </SettingsListItem>
         </CardContent>
       </Card>
 
@@ -279,48 +233,32 @@ export const Settings = () => {
       <Card>
         <CardHeader>
           <CardTitle>Support</CardTitle>
-          <CardDescription>
-            Get help and provide feedback
-          </CardDescription>
+          <CardDescription>Get help and provide feedback</CardDescription>
         </CardHeader>
         <CardContent className="space-y-1">
-          <button
+          <SettingsListItem
+            icon={Mail}
+            iconColor="text-purple-600 dark:text-purple-400"
+            label="Contact Support"
             onClick={() => window.location.href = 'mailto:support@puppysteps.app'}
-            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <Mail className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              <span className="font-medium text-gray-900 dark:text-gray-100">
-                Contact Support
-              </span>
-            </div>
-            <ChevronRight className="h-5 w-5 text-gray-400" />
-          </button>
+            rightContent={<ChevronRight className="h-5 w-5 text-gray-400" />}
+          />
 
-          <button
-            onClick={() => console.log('Open help center')}
-            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <HelpCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-              <span className="font-medium text-gray-900 dark:text-gray-100">
-                Help Center
-              </span>
-            </div>
-            <ChevronRight className="h-5 w-5 text-gray-400" />
-          </button>
+          <SettingsListItem
+            icon={HelpCircle}
+            iconColor="text-orange-600 dark:text-orange-400"
+            label="Help Center"
+            onClick={() => { /* TODO: Open help center */ }}
+            rightContent={<ChevronRight className="h-5 w-5 text-gray-400" />}
+          />
         </CardContent>
       </Card>
 
       {/* Danger Zone */}
       <Card className="border-red-200 dark:border-red-800">
         <CardHeader>
-          <CardTitle className="text-red-600 dark:text-red-400">
-            Sign Out
-          </CardTitle>
-          <CardDescription>
-            Leave your account
-          </CardDescription>
+          <CardTitle className="text-red-600 dark:text-red-400">Sign Out</CardTitle>
+          <CardDescription>Leave your account</CardDescription>
         </CardHeader>
         <CardContent>
           <Button

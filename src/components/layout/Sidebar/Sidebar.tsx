@@ -32,11 +32,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const { signOut } = useAuth();
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error('Sign out error:', error);
-    }
+    await signOut();
   };
 
   return (

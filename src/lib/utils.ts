@@ -38,18 +38,18 @@ export function getReactionEmoji(reaction: string): string {
     '😟': '😟',
     '😐': '😐',
     '😊': '😊',
-    '😄': '😄',
+    '😍': '😍',
   };
   return reactions[reaction] || '😐';
 }
 
 export function getReactionLabel(reaction: string): string {
   const labels: Record<string, string> = {
-    '😰': 'Very Scared',
-    '😟': 'Scared',
+    '😰': 'Very Negative',
+    '😟': 'Negative',
     '😐': 'Neutral',
-    '😊': 'Happy',
-    '😄': 'Very Happy',
+    '😊': 'Positive',
+    '😍': 'Very Positive',
   };
   return labels[reaction] || 'Neutral';
 }

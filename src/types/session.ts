@@ -1,6 +1,6 @@
-export type SessionType = 'people' | 'dogs' | 'environments' | 'noises' | 'People' | 'Dogs' | 'Environments' | 'Noises';
+export type SessionType = 'people' | 'dogs' | 'environments' | 'noises';
 
-export type ReactionLevel = '😰' | '😟' | '😐' | '😊' | '😍' | '😄';
+export type ReactionLevel = '😰' | '😟' | '😐' | '😊' | '😍';
 
 export interface Session {
   id: string;
@@ -12,9 +12,8 @@ export interface Session {
   reaction: ReactionLevel;
   notes?: string;
   photoUrl?: string;
-  photoURL?: string; // iOS uses photoURL
   createdAt: Date;
-  updatedAt?: Date; // iOS doesn't have this field
+  updatedAt?: Date;
 }
 
 export interface SessionFormData {
@@ -65,43 +64,6 @@ export const SESSION_CATEGORIES: Record<SessionType, string[]> = {
     'Bicycles',
     'Skateboards'
   ],
-  // iOS capitalized versions
-  People: [
-    'Men',
-    'Women',
-    'Children',
-    'Elderly People',
-    'People with Hats',
-    'People with Glasses'
-  ],
-  Dogs: [
-    'Small Dogs',
-    'Big Dogs',
-    'Puppies',
-    'Senior Dogs',
-    'Different Breeds'
-  ],
-  Environments: [
-    'Park',
-    'Sidewalk',
-    'Café',
-    'Vet Office',
-    'Pet Store',
-    'Car Rides',
-    'Public Transport',
-    'Elevator'
-  ],
-  Noises: [
-    'Vacuum Cleaner',
-    'Car Horns',
-    'Thunder',
-    'Fireworks',
-    'Doorbell',
-    'Phone Ringing',
-    'Umbrella',
-    'Bicycles',
-    'Skateboards'
-  ]
 };
 
 // Helper to get emoji for session type
@@ -110,11 +72,6 @@ export const SESSION_TYPE_EMOJI: Record<SessionType, string> = {
   dogs: '🐕',
   environments: '🏠',
   noises: '🔊',
-  // iOS capitalized versions
-  People: '👥',
-  Dogs: '🐕',
-  Environments: '🏠',
-  Noises: '🔊'
 };
 
 // Helper to get display name for reaction
@@ -124,8 +81,21 @@ export const REACTION_LABELS: Record<ReactionLevel, string> = {
   '😐': 'Neutral',
   '😊': 'Positive',
   '😍': 'Very Positive',
-  '😄': 'Extremely Positive'
 };
+
+// Normalize session type from iOS (capitalized) to canonical lowercase
+export function normalizeSessionType(type: string): SessionType {
+  const lower = type.toLowerCase();
+  if (lower === 'people' || lower === 'dogs' || lower === 'environments' || lower === 'noises') {
+    return lower as SessionType;
+  }
+  // Legacy fallback for old iOS data
+  if (lower === 'person') return 'people';
+  if (lower === 'dog') return 'dogs';
+  if (lower === 'environment') return 'environments';
+  if (lower === 'noise') return 'noises';
+  return 'people'; // default fallback
+}
 
 export interface SessionFilters {
   type?: SessionType;

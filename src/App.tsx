@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/context/AuthContext';
-import { DogProvider } from '@/context/DogContext';
 import { router } from '@/routes/AppRouter';
 import { RouterProvider } from 'react-router-dom';
 
@@ -18,9 +17,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <DogProvider>
-          <RouterProvider router={router} />
-        </DogProvider>
+        <RouterProvider router={router} />
       </AuthProvider>
     </QueryClientProvider>
   );

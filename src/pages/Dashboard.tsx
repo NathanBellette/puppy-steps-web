@@ -6,7 +6,7 @@ import { DogAvatar } from '@/components/ui/DogAvatar';
 import { GoalItem } from '@/components/ui/GoalItem';
 import { SessionItem } from '@/components/ui/SessionItem';
 import { AddDogModal } from '@/components/AddDogModal';
-import { useDogs } from '@/context/DogContext';
+import { useDogs } from '@/hooks/useDogProfile';
 import { useGoalStats, useGoals } from '@/hooks/useGoals';
 import { useSessionStats, useSessions } from '@/hooks/useSessions';
 import { Target, Calendar, TrendingUp, Award, Plus } from 'lucide-react';
@@ -17,16 +17,12 @@ export const Dashboard = () => {
   const [showAddDogModal, setShowAddDogModal] = useState<boolean>(false);
   const [showLogSessionModal, setShowLogSessionModal] = useState<boolean>(false);
   const { stats: goalStats, isLoading: goalsLoading } = useGoalStats(selectedDog?.id);
-  const { goals, isLoading: allGoalsLoading, incrementGoal } = useGoals(selectedDog?.id);
+  const { goals, incrementGoal } = useGoals(selectedDog?.id);
   const { stats: sessionStats, isLoading: sessionsLoading } = useSessionStats(selectedDog?.id);
   const { sessions } = useSessions(selectedDog?.id);
 
   const todaysGoals = goals.filter(goal => !goal.isCompleted).slice(0, 5);
   const recentSessions = sessions.slice(0, 3);
-
-  if(!allGoalsLoading) {
-    console.log('sessions in dashboard: ', sessions)
-  }
 
   if (!selectedDog) {
     return (
