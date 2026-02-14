@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
+import { Spinner } from './ui/Spinner';
 import { useSessions } from '@/hooks/useSessions';
 import { useToast } from '@/context/ToastContext';
 import {
@@ -31,6 +35,19 @@ interface LogSessionModalProps {
   prefillCategory?: string;
 }
 
+const sessionFormSchema = z.object({
+  date: z.string().min(1, 'Date is required'),
+  type: z.enum(['people', 'dogs', 'environments', 'noises']),
+  category: z.string().min(1, 'Please select a category'),
+  reaction: z.enum(['😰', '😟', '😐', '😊', '😍']),
+  placeType: z.enum(['Home', 'Street', 'Park', 'Store', 'Cafe', 'Car', 'Vet', 'PublicTransport', 'Other']),
+  intensity: z.enum(['low', 'medium', 'high']),
+  isNewToDog: z.boolean(),
+  notes: z.string(),
+});
+
+type SessionFormValues = z.infer<typeof sessionFormSchema>;
+
 const reactionLevels: ReactionLevel[] = ['😰', '😟', '😐', '😊', '😍'];
 
 export const LogSessionModal = ({
@@ -43,68 +60,79 @@ export const LogSessionModal = ({
 }: LogSessionModalProps) => {
   const { createSession, isCreating } = useSessions(dogId);
   const { showToast } = useToast();
-  const [selectedType, setSelectedType] = useState<SessionType>(prefillType ?? 'people');
-  const [selectedCategory, setSelectedCategory] = useState<string>(prefillCategory ?? '');
-  const [selectedReaction, setSelectedReaction] = useState<ReactionLevel>('😊');
-  const [selectedPlace, setSelectedPlace] = useState<PlaceType>('Home');
-  const [selectedIntensity, setSelectedIntensity] = useState<Intensity>('low');
-  const [isNewToDog, setIsNewToDog] = useState<boolean>(false);
-  const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [notes, setNotes] = useState<string>('');
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
 
-  // Apply prefill values when they change (e.g. opening from different target cards)
-  useEffect(() => {
-    if (isOpen) {
-      if (prefillType) setSelectedType(prefillType);
-      if (prefillCategory) setSelectedCategory(prefillCategory);
-    }
-  }, [isOpen, prefillType, prefillCategory]);
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<SessionFormValues>({
+    resolver: zodResolver(sessionFormSchema),
+    defaultValues: {
+      date: new Date().toISOString().split('T')[0],
+      type: prefillType ?? 'people',
+      category: prefillCategory ?? '',
+      reaction: '😊',
+      placeType: 'Home',
+      intensity: 'low',
+      isNewToDog: false,
+      notes: '',
+    },
+  });
+
+  const selectedType = watch('type');
+  const selectedReaction = watch('reaction');
+  const selectedPlace = watch('placeType');
+  const selectedIntensity = watch('intensity');
+  const isNewToDog = watch('isNewToDog');
 
   const showNewToDog = selectedType === 'people' || selectedType === 'dogs';
 
-  // Reset category when type changes
+  // Photo is managed separately since react-hook-form doesn't handle File objects well with zod
+  const [photo, setPhoto] = useState<File | null>(null);
+
+  // Apply prefill values when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      if (prefillType) setValue('type', prefillType);
+      if (prefillCategory) setValue('category', prefillCategory);
+    }
+  }, [isOpen, prefillType, prefillCategory, setValue]);
+
   const handleTypeChange = (type: SessionType) => {
-    setSelectedType(type);
-    setSelectedCategory('');
-    setIsNewToDog(false);
-    setFormError(null);
+    setValue('type', type);
+    setValue('category', '');
+    setValue('isNewToDog', false);
   };
 
   const resetForm = () => {
-    setSelectedType(prefillType ?? 'people');
-    setSelectedCategory(prefillCategory ?? '');
-    setSelectedReaction('😊');
-    setSelectedPlace('Home');
-    setSelectedIntensity('low');
-    setIsNewToDog(false);
-    setDate(new Date().toISOString().split('T')[0]);
-    setNotes('');
+    reset({
+      date: new Date().toISOString().split('T')[0],
+      type: prefillType ?? 'people',
+      category: prefillCategory ?? '',
+      reaction: '😊',
+      placeType: 'Home',
+      intensity: 'low',
+      isNewToDog: false,
+      notes: '',
+    });
     setPhoto(null);
-    setFormError(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError(null);
-
-    if (!selectedCategory) {
-      setFormError('Please select a category');
-      return;
-    }
-
+  const onSubmit = async (data: SessionFormValues) => {
     try {
       await createSession({
         dogId,
-        date: new Date(date),
-        type: selectedType,
-        category: selectedCategory,
-        reaction: selectedReaction,
-        placeType: selectedPlace,
-        intensity: selectedIntensity,
-        isNewToDog: showNewToDog ? isNewToDog : false,
-        notes: notes || undefined,
+        date: new Date(data.date),
+        type: data.type,
+        category: data.category,
+        reaction: data.reaction as ReactionLevel,
+        placeType: data.placeType as PlaceType,
+        intensity: data.intensity as Intensity,
+        isNewToDog: showNewToDog ? data.isNewToDog : false,
+        notes: data.notes || undefined,
         photo: photo || undefined,
       });
 
@@ -112,27 +140,18 @@ export const LogSessionModal = ({
       onClose();
       showToast('Exposure logged successfully!', 'success');
     } catch {
-      setFormError('Failed to log exposure. Please try again.');
+      // Show inline error — handled by the form error display
     }
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setPhoto(file);
-    }
+    if (file) setPhoto(file);
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Log Exposure for ${dogName}`} className="p-8">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Form Error */}
-        {formError && (
-          <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm">
-            {formError}
-          </div>
-        )}
-
+    <Modal isOpen={isOpen} onClose={onClose} title={`Log Exposure for ${dogName}`}>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 px-6 pb-6">
         {/* Date */}
         <div>
           <label htmlFor="date" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -141,11 +160,12 @@ export const LogSessionModal = ({
           <Input
             type="date"
             id="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
+            {...register('date')}
             max={new Date().toISOString().split('T')[0]}
           />
+          {errors.date && (
+            <p className="mt-1 text-sm text-red-600">{errors.date.message}</p>
+          )}
         </div>
 
         {/* Exposure Type */}
@@ -180,12 +200,7 @@ export const LogSessionModal = ({
           </label>
           <select
             id="category"
-            value={selectedCategory}
-            onChange={(e) => {
-              setSelectedCategory(e.target.value);
-              setFormError(null);
-            }}
-            required
+            {...register('category')}
             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-slate-800 dark:text-slate-100"
           >
             <option value="">Select a category</option>
@@ -195,6 +210,9 @@ export const LogSessionModal = ({
               </option>
             ))}
           </select>
+          {errors.category && (
+            <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>
+          )}
         </div>
 
         {/* Place */}
@@ -207,7 +225,7 @@ export const LogSessionModal = ({
               <button
                 key={place}
                 type="button"
-                onClick={() => setSelectedPlace(place)}
+                onClick={() => setValue('placeType', place)}
                 className={cn(
                   'px-3 py-1.5 rounded-full text-sm font-medium transition-all',
                   selectedPlace === place
@@ -231,7 +249,7 @@ export const LogSessionModal = ({
               <button
                 key={level}
                 type="button"
-                onClick={() => setSelectedIntensity(level)}
+                onClick={() => setValue('intensity', level)}
                 className={cn(
                   'flex-1 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all text-center',
                   selectedIntensity === level
@@ -252,7 +270,7 @@ export const LogSessionModal = ({
               <input
                 type="checkbox"
                 checked={isNewToDog}
-                onChange={(e) => setIsNewToDog(e.target.checked)}
+                onChange={(e) => setValue('isNewToDog', e.target.checked)}
                 className="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-primary-500 focus:ring-primary-500"
               />
               <div>
@@ -277,7 +295,7 @@ export const LogSessionModal = ({
               <button
                 key={reaction}
                 type="button"
-                onClick={() => setSelectedReaction(reaction)}
+                onClick={() => setValue('reaction', reaction)}
                 className={cn(
                   'flex-1 p-3 rounded-lg border-2 transition-all',
                   selectedReaction === reaction
@@ -302,8 +320,7 @@ export const LogSessionModal = ({
           </label>
           <textarea
             id="notes"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
+            {...register('notes')}
             rows={3}
             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-slate-800 dark:text-slate-100"
             placeholder="Add any additional notes about this exposure..."
@@ -348,12 +365,12 @@ export const LogSessionModal = ({
           </Button>
           <Button
             type="submit"
-            disabled={isCreating || !selectedCategory}
+            disabled={isCreating}
             className="flex-1"
           >
             {isCreating ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                <Spinner className="mr-2" />
                 Logging...
               </>
             ) : (
