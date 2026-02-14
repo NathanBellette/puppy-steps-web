@@ -1,59 +1,117 @@
 # PuppySteps - Dog Socialization Tracking App
 
-A responsive web application built with React, TypeScript, and TailwindCSS to help dog owners track their dog's socialization progress.
+A responsive web application built with React, TypeScript, and TailwindCSS to help dog owners track and manage their dog's socialization progress through structured goals, session logging, and progress analytics.
 
-## 🚀 Features
+## Features
 
 ### Core Functionality
-- **Dog Profile Management**: Add/edit dog profiles with photos, breed, age
-- **Multi-dog Support**: Support for multiple dogs per user
-- **Dashboard**: Progress tracking with circular indicators and goal summaries
-- **Goals & Milestones**: Categorized goals (People, Dogs, Environments, Noises/Objects)
-- **Session Logging**: Track socialization sessions with reactions and notes
+- **Dog Profile Management**: Add, edit, and delete dog profiles with photos, breed, and age
+- **Multi-dog Support**: Manage multiple dogs per user with easy switching
+- **Dashboard**: At-a-glance progress with circular indicators, today's plan, recent sessions, and weekly calm exposure tracking
+- **Goals & Milestones**: 29 predefined socialization targets across 4 categories (People, Dogs, Environments, Noises) with calm exposure and variety tracking
+- **Session Logging**: Log socialization sessions with reaction levels (5-point emoji scale), place type, intensity, notes, and photos
 - **Calendar View**: Visual calendar showing logged sessions
-- **Progress Reports**: Charts and statistics for progress analysis
+- **Progress Reports**: Goal completion statistics and session analytics
 - **Resources Section**: Training materials and guides
+- **Settings**: Theme toggle (light/dark mode) and user preferences
 
-### Web-Specific Enhancements
-- **Responsive Design**: Mobile-first design with sidebar navigation on desktop
-- **Dark Mode**: Toggle between light and dark themes
-- **Export Functionality**: Export data as CSV/PDF from reports
-- **Achievements**: Gamification with badges and progress tracking
+### Web-Specific
+- **Responsive Design**: Mobile-first layout with bottom navigation on mobile and sidebar on desktop
+- **Dark Mode**: Class-based theme switching via TailwindCSS
 - **Real-time Updates**: Firebase integration for live data sync
+- **Optimistic Updates**: Immediate UI feedback with rollback on errors
+- **Protected Routes**: Authentication-gated access with automatic redirects
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-- **Frontend**: React 18 + TypeScript
-- **Styling**: TailwindCSS with dark mode support
-- **State Management**: Zustand + React Query (TanStack Query)
-- **Backend**: Firebase (Auth, Firestore, Storage)
-- **Forms**: React Hook Form + Zod validation
-- **Charts**: Recharts for data visualization
-- **Icons**: Lucide React
-- **Routing**: React Router DOM
-- **Build Tool**: Vite
+| Category | Technology |
+|---|---|
+| **Frontend** | React 18, TypeScript 5.2 |
+| **Build Tool** | Vite 5 |
+| **Styling** | TailwindCSS 3.3, tailwind-merge, clsx |
+| **Routing** | React Router DOM 6 |
+| **State Management** | TanStack Query (React Query) 5, React Context |
+| **Forms** | React Hook Form 7, Zod 3 |
+| **Backend** | Firebase 10 (Auth, Firestore, Cloud Storage) |
+| **Icons** | Lucide React |
+| **Dates** | date-fns 2 |
+| **Unit Testing** | Vitest 3, Testing Library (React, jest-dom, user-event) |
+| **E2E Testing** | Playwright 1.58 |
+| **Linting** | ESLint 8 with TypeScript ESLint |
+| **CI/CD** | GitHub Actions, Firebase Hosting |
 
-## 📁 Project Structure
+## Project Structure
 
 ```
-src/
-├── components/          # Reusable UI components
-│   ├── ui/             # Basic UI primitives (Button, Card, etc.)
-│   ├── layout/         # Layout components (Sidebar, Header, etc.)
-│   └── charts/         # Chart components (when implemented)
-├── pages/              # Route-level pages
-├── hooks/              # Custom hooks for data management
-├── lib/                # Firebase & utility functions
-├── context/            # React context providers
-├── types/              # TypeScript type definitions
-└── routes/             # Routing configuration
+puppy-steps-web/
+├── src/
+│   ├── components/
+│   │   ├── ui/              # Reusable UI primitives
+│   │   │   ├── Button/
+│   │   │   ├── Card/
+│   │   │   ├── ConfirmModal/
+│   │   │   ├── DogAvatar/
+│   │   │   ├── EmptyState/
+│   │   │   ├── GoalItem/
+│   │   │   ├── Input/
+│   │   │   ├── Modal/
+│   │   │   ├── PageLoader/
+│   │   │   ├── Progress/
+│   │   │   ├── SegmentedControl/
+│   │   │   ├── Select/
+│   │   │   ├── SessionItem/
+│   │   │   ├── SettingsListItem/
+│   │   │   ├── SkeletonList/
+│   │   │   └── Spinner/
+│   │   ├── layout/          # Layout components
+│   │   │   ├── Header/
+│   │   │   ├── Layout/
+│   │   │   ├── MobileNav/
+│   │   │   ├── ProtectedRoute.tsx
+│   │   │   └── Sidebar/
+│   │   └── AddDogModal.tsx
+│   ├── pages/               # Route-level pages
+│   │   ├── AuthPage.tsx
+│   │   ├── Calendar.tsx
+│   │   ├── Dashboard.tsx
+│   │   ├── Goals.tsx
+│   │   ├── Resources.tsx
+│   │   ├── Sessions.tsx
+│   │   └── Settings.tsx
+│   ├── hooks/               # Custom React hooks
+│   │   ├── useAuth.ts
+│   │   ├── useDogProfile.ts
+│   │   ├── useGoals.ts
+│   │   ├── useSessions.ts
+│   │   └── useTargetProgress.ts
+│   ├── services/            # Business logic & statistics
+│   │   ├── goalStats.ts
+│   │   ├── sessionStats.ts
+│   │   └── targetProgress.ts
+│   ├── context/             # React context providers
+│   │   ├── AuthContext.tsx
+│   │   └── ToastContext.tsx
+│   ├── types/               # TypeScript type definitions
+│   ├── lib/                 # Firebase config & utilities
+│   ├── routes/              # Routing configuration
+│   └── test/                # Test setup
+├── e2e/                     # Playwright E2E tests
+├── .github/
+│   └── workflows/           # CI/CD pipelines
+│       ├── ci.yml
+│       ├── deploy.yml
+│       ├── playwright.yml
+│       └── dependency-updates.yml
+├── firestore.rules          # Firestore security rules
+├── storage.rules            # Cloud Storage security rules
+└── firebase.json            # Firebase hosting config
 ```
 
-## 🚦 Getting Started
+## Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
-- npm or yarn
+- Node.js 22+
+- npm
 - Firebase project with Auth, Firestore, and Storage enabled
 
 ### Installation
@@ -70,18 +128,24 @@ src/
    ```
 
 3. **Configure Firebase**
-   - Copy `env.example` to `.env.local`
-   - Add your Firebase configuration values
    ```bash
    cp env.example .env.local
+   ```
+   Edit `.env.local` and add your Firebase configuration values:
+   ```
+   VITE_FIREBASE_API_KEY=your_api_key_here
+   VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   VITE_FIREBASE_APP_ID=your_app_id
+   VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id  # optional
    ```
 
 4. **Start development server**
    ```bash
    npm run dev
    ```
-
-5. **Open your browser**
    Navigate to `http://localhost:5173`
 
 ### Firebase Setup
@@ -93,81 +157,106 @@ src/
 5. Add your web app to the Firebase project
 6. Copy the configuration values to your `.env.local` file
 
-## 📱 Responsive Design
+## Available Scripts
 
-The application is built with a mobile-first approach:
+| Command | Description |
+|---|---|
+| `npm run dev` | Start Vite development server |
+| `npm run build` | TypeScript check + production build |
+| `npm run preview` | Preview production build locally |
+| `npm run lint` | Run ESLint (zero warnings policy) |
+| `npm run lint:fix` | Run ESLint with auto-fix |
+| `npm run test` | Run Vitest in watch mode |
+| `npm run test:run` | Run Vitest once |
+| `npm run test:ui` | Open Vitest UI dashboard |
+| `npm run test:coverage` | Run tests with coverage report |
+| `npm run type-check` | TypeScript type checking (no emit) |
+| `npm run firebase:emulators` | Start Firebase emulators |
+| `npm run firebase:deploy` | Deploy to Firebase Hosting |
 
-- **Mobile**: Bottom navigation bar with essential features
-- **Desktop**: Sidebar navigation with full feature access
-- **Tablet**: Adaptive layout that works on all screen sizes
+## Testing
 
-## 🎨 UI Components
+### Unit Tests
 
-### Reusable Components
-- **Button**: Multiple variants (primary, secondary, outline, ghost)
-- **Card**: Container component with header, content, footer
-- **Input**: Form input with validation styling
-- **Modal**: Accessible modal with backdrop and keyboard navigation
-- **Progress**: Linear and circular progress indicators
-- **Select**: Custom dropdown with search capabilities
+Unit tests use **Vitest** with **Testing Library**. Tests cover UI components and business logic services.
 
-### Specialized Components
-- **DogAvatar**: Profile photo display with fallback initials
-- **GoalItem**: Interactive goal display with completion tracking
-- **SessionItem**: Session log entry with type icons and reactions
+```bash
+# Watch mode
+npm run test
 
-## 🔐 Authentication
+# Single run
+npm run test:run
 
-- Email/password authentication
-- User profile management
-- Protected routes with automatic redirects
-- Persistent login state
+# With coverage
+npm run test:coverage
 
-## 📊 Data Management
+# Interactive UI
+npm run test:ui
+```
 
-- **Firebase Firestore**: Real-time database for user data
-- **React Query**: Server state management with caching
-- **Zustand**: Client state management for UI state
-- **Optimistic Updates**: Immediate UI feedback with rollback on errors
+### E2E Tests
 
-## 🚀 Deployment
+End-to-end tests use **Playwright** and run against Chromium, Firefox, and WebKit.
 
-This project is configured to deploy to Firebase Hosting via GitHub Actions.
+```bash
+# Install browsers (first time)
+npx playwright install
+
+# Run E2E tests
+npx playwright test
+
+# View HTML report
+npx playwright show-report
+```
+
+## CI/CD
+
+Four GitHub Actions workflows automate quality checks and deployment:
+
+| Workflow | Trigger | Description |
+|---|---|---|
+| **CI** (`ci.yml`) | Pull requests to `main` | Type checking, linting, unit tests, build verification |
+| **Playwright** (`playwright.yml`) | Pull requests | E2E tests across browsers with HTML report artifact |
+| **Deploy** (`deploy.yml`) | Push to `main` | Build and deploy to Firebase Hosting |
+| **Dependency Updates** (`dependency-updates.yml`) | Weekly (Mondays) / manual | Automated dependency updates with PR creation |
+
+## Deployment
 
 ### Automated Deployment
 
-When you push to the `main` branch, GitHub Actions will automatically:
-1. Run tests and linting
+Pushing to the `main` branch triggers GitHub Actions to:
+1. Run type checking and linting
 2. Build the application
 3. Deploy to Firebase Hosting
 
 ### Setup Instructions
 
-To set up Firebase Hosting deployment:
-1. Follow the detailed guide in [`.github/FIREBASE_DEPLOYMENT_SETUP.md`](.github/FIREBASE_DEPLOYMENT_SETUP.md)
+To configure Firebase Hosting deployment:
+1. Follow the guide in [`.github/FIREBASE_DEPLOYMENT_SETUP.md`](.github/FIREBASE_DEPLOYMENT_SETUP.md)
 2. Add required GitHub Secrets to your repository
 3. Push to `main` to trigger deployment
 
 ### Manual Deployment
 
-You can also deploy manually:
 ```bash
-# Install dependencies
-npm install
-
-# Build the application
 npm run build
-
-# Deploy to Firebase
 npm run firebase:deploy
 ```
 
-Your app will be available at: `https://your-project-id.web.app`
+## Authentication
 
-## 🎯 Future Enhancements
+- Email/password authentication via Firebase Auth
+- User profile management
+- Protected routes with automatic redirects
+- Persistent login state
 
-- [ ] Interactive calendar with session highlighting
-- [ ] Chart visualizations using Recharts
+## Security
+
+- **Firestore Rules**: User-scoped data access, field validation, deny-by-default for unknown collections
+- **Storage Rules**: User-based file access control, image-only restrictions, 1MB file size limit
+
+## Future Enhancements
+
 - [ ] CSV/PDF export functionality
 - [ ] Push notifications for goal reminders
 - [ ] Social sharing of achievements
@@ -175,7 +264,7 @@ Your app will be available at: `https://your-project-id.web.app`
 - [ ] Offline support with service workers
 - [ ] Progressive Web App (PWA) features
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -183,17 +272,6 @@ Your app will be available at: `https://your-project-id.web.app`
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-- Firebase for backend services
-- TailwindCSS for styling framework
-- React team for the amazing framework
-- All the open-source contributors who made this possible
-
----
-
-**Built with ❤️ for dog lovers and their furry friends**
