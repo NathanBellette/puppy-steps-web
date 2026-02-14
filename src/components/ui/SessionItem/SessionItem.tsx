@@ -28,15 +28,15 @@ const SessionItem = ({ session, onEdit, onDelete, className }: SessionItemProps)
   const getSessionTypeColor = (type: SessionType) => {
     switch (type) {
       case 'people':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+        return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300';
       case 'dogs':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+        return 'bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-300';
       case 'environments':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
+        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300';
       case 'noises':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
+        return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+        return 'bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-300';
     }
   };
 
@@ -47,20 +47,20 @@ const SessionItem = ({ session, onEdit, onDelete, className }: SessionItemProps)
       case '😟':
         return 'text-orange-500';
       case '😐':
-        return 'text-gray-500';
+        return 'text-slate-500';
       case '😊':
-        return 'text-green-500';
+        return 'text-emerald-500';
       case '😍':
-        return 'text-green-600';
+        return 'text-emerald-600';
       default:
-        return 'text-gray-500';
+        return 'text-slate-500';
     }
   };
 
   return (
     <div
       className={cn(
-        'flex items-start space-x-4 p-4 rounded-lg border bg-white border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700',
+        'flex items-start space-x-4 p-4 rounded-lg border bg-white border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800',
         className
       )}
     >
@@ -84,14 +84,14 @@ const SessionItem = ({ session, onEdit, onDelete, className }: SessionItemProps)
               <span className="ml-1">{capitalizeFirst(session.type)}</span>
             </span>
             {session.category && (
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+              <span className="text-sm text-slate-600 dark:text-slate-400">
                 • {session.category}
               </span>
             )}
             <span className={cn('text-2xl', getReactionColor(session.reaction))}>
               {getReactionEmoji(session.reaction)}
             </span>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
+            <span className="text-sm text-slate-500 dark:text-slate-400">
               {getReactionLabel(session.reaction)}
             </span>
           </div>
@@ -99,7 +99,7 @@ const SessionItem = ({ session, onEdit, onDelete, className }: SessionItemProps)
             {onEdit && (
               <button
                 onClick={() => onEdit(session.id)}
-                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                 aria-label="Edit session"
               >
                 <Edit className="w-4 h-4" />
@@ -108,7 +108,7 @@ const SessionItem = ({ session, onEdit, onDelete, className }: SessionItemProps)
             {onDelete && (
               <button
                 onClick={() => onDelete(session.id)}
-                className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                className="p-1 text-slate-400 hover:text-red-600 dark:hover:text-red-400"
                 aria-label="Delete session"
               >
                 <Trash2 className="w-4 h-4" />
@@ -117,13 +117,13 @@ const SessionItem = ({ session, onEdit, onDelete, className }: SessionItemProps)
           </div>
         </div>
 
-        <div className="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
+        <div className="mt-2 flex items-center text-sm text-slate-500 dark:text-slate-400">
           <Calendar className="w-4 h-4 mr-1" />
           {formatDateTime(session.date)}
         </div>
 
         {session.notes && (
-          <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+          <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
             {session.notes}
           </p>
         )}

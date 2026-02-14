@@ -27,19 +27,19 @@ export function useToast() {
 const TOAST_DURATION = 3500;
 
 const toastStyles: Record<ToastType, string> = {
-  success: 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800 text-green-800 dark:text-green-200',
+  success: 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200',
   error: 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200',
-  info: 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200',
+  info: 'bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-800 text-primary-800 dark:text-primary-200',
 };
 
 const ToastIcon = ({ type }: { type: ToastType }) => {
   switch (type) {
     case 'success':
-      return <CheckCircle className="h-5 w-5 text-green-500" />;
+      return <CheckCircle className="h-5 w-5 text-emerald-500" />;
     case 'error':
       return <AlertCircle className="h-5 w-5 text-red-500" />;
     case 'info':
-      return <Info className="h-5 w-5 text-blue-500" />;
+      return <Info className="h-5 w-5 text-primary-500" />;
   }
 };
 

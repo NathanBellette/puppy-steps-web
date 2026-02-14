@@ -15,7 +15,7 @@ interface SettingsListItemProps {
 
 export const SettingsListItem = ({
   icon: Icon,
-  iconColor = 'text-gray-600 dark:text-gray-400',
+  iconColor = 'text-slate-600 dark:text-slate-400',
   label,
   rightContent,
   expandable = false,
@@ -28,11 +28,11 @@ export const SettingsListItem = ({
     <div className={className}>
       <button
         onClick={onClick}
-        className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+        className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
       >
         <div className="flex items-center gap-3">
           <Icon className={cn('h-5 w-5', iconColor)} />
-          <span className="font-medium text-gray-900 dark:text-gray-100">
+          <span className="font-medium text-slate-900 dark:text-slate-100">
             {label}
           </span>
         </div>
@@ -41,7 +41,7 @@ export const SettingsListItem = ({
         ) : expandable ? (
           <ChevronRight
             className={cn(
-              'h-5 w-5 text-gray-400 transition-transform',
+              'h-5 w-5 text-slate-400 transition-transform',
               expanded && 'rotate-90'
             )}
           />

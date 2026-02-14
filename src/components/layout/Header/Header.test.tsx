@@ -116,7 +116,7 @@ describe('Header', () => {
     render(<Header />);
     
     const header = screen.getByRole('banner');
-    expect(header).toHaveClass('bg-white', 'dark:bg-gray-900', 'shadow-sm', 'border-b');
+    expect(header).toHaveClass('bg-white', 'dark:bg-slate-900', 'shadow-sm', 'border-b');
   });
 
   it('does not render hamburger menu button', () => {

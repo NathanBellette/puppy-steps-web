@@ -50,7 +50,7 @@ const Modal = forwardRef<HTMLDivElement, ModalProps>(
         <div
           ref={ref}
           className={cn(
-            'relative z-50 w-full bg-white rounded-lg shadow-lg dark:bg-gray-900',
+            'relative z-50 w-full bg-white rounded-lg shadow-lg dark:bg-slate-900',
             sizes[size],
             'mx-4 max-h-[90vh] overflow-y-auto',
             className
@@ -76,7 +76,7 @@ const ModalHeader = forwardRef<HTMLDivElement, ModalHeaderProps>(
     <div
       ref={ref}
       className={cn(
-        'flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700',
+        'flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700',
         className
       )}
       {...props}
@@ -85,7 +85,7 @@ const ModalHeader = forwardRef<HTMLDivElement, ModalHeaderProps>(
       {onClose && (
         <button
           onClick={onClose}
-          className="rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:pointer-events-none dark:ring-offset-gray-950"
+          className="rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:pointer-events-none dark:ring-offset-slate-950"
         >
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
@@ -112,7 +112,7 @@ const ModalFooter = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivEleme
     <div
       ref={ref}
       className={cn(
-        'flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 p-6 border-t border-gray-200 dark:border-gray-700',
+        'flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 p-6 border-t border-slate-200 dark:border-slate-700',
         className
       )}
       {...props}
@@ -125,7 +125,7 @@ const ModalTitle = forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadi
   ({ className, ...props }, ref) => (
     <h2
       ref={ref}
-      className={cn('text-lg font-semibold text-gray-900 dark:text-gray-100', className)}
+      className={cn('text-lg font-semibold text-slate-900 dark:text-slate-100', className)}
       {...props}
     />
   )

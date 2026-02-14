@@ -2,6 +2,33 @@ export type SessionType = 'people' | 'dogs' | 'environments' | 'noises';
 
 export type ReactionLevel = '😰' | '😟' | '😐' | '😊' | '😍';
 
+export type PlaceType = 'Home' | 'Street' | 'Park' | 'Store' | 'Cafe' | 'Car' | 'Vet' | 'PublicTransport' | 'Other';
+export type Intensity = 'low' | 'medium' | 'high';
+
+export const PLACE_TYPES: PlaceType[] = [
+  'Home', 'Street', 'Park', 'Store', 'Cafe', 'Car', 'Vet', 'PublicTransport', 'Other'
+];
+
+export const PLACE_TYPE_LABELS: Record<PlaceType, string> = {
+  Home: 'Home',
+  Street: 'Street',
+  Park: 'Park',
+  Store: 'Store',
+  Cafe: 'Cafe',
+  Car: 'Car',
+  Vet: 'Vet',
+  PublicTransport: 'Public Transport',
+  Other: 'Other',
+};
+
+export const INTENSITY_LEVELS: Intensity[] = ['low', 'medium', 'high'];
+
+export const INTENSITY_LABELS: Record<Intensity, string> = {
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
+};
+
 export interface Session {
   id: string;
   userId: string;
@@ -10,6 +37,9 @@ export interface Session {
   type: SessionType;
   category: string; // Specific subcategory within the type
   reaction: ReactionLevel;
+  placeType?: PlaceType;
+  intensity?: Intensity;
+  isNewToDog?: boolean;
   notes?: string;
   photoUrl?: string;
   createdAt: Date;
@@ -22,6 +52,9 @@ export interface SessionFormData {
   type: SessionType;
   category: string;
   reaction: ReactionLevel;
+  placeType?: PlaceType;
+  intensity?: Intensity;
+  isNewToDog?: boolean;
   notes?: string;
   photo?: File;
 }

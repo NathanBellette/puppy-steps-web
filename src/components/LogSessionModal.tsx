@@ -1,10 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { useSessions } from '@/hooks/useSessions';
 import { useToast } from '@/context/ToastContext';
-import { SessionType, SESSION_TYPE_EMOJI, SESSION_CATEGORIES, ReactionLevel, REACTION_LABELS } from '@/types';
+import {
+  SessionType,
+  SESSION_TYPE_EMOJI,
+  SESSION_CATEGORIES,
+  ReactionLevel,
+  REACTION_LABELS,
+  PlaceType,
+  Intensity,
+  PLACE_TYPES,
+  PLACE_TYPE_LABELS,
+  INTENSITY_LEVELS,
+  INTENSITY_LABELS,
+} from '@/types';
+import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
 
 interface LogSessionModalProps {
@@ -12,32 +25,70 @@ interface LogSessionModalProps {
   onClose: () => void;
   dogId: string;
   dogName: string;
+  /** Pre-fill exposure type when opening from a target card */
+  prefillType?: SessionType;
+  /** Pre-fill category when opening from a target card */
+  prefillCategory?: string;
 }
 
 const reactionLevels: ReactionLevel[] = ['😰', '😟', '😐', '😊', '😍'];
 
-export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionModalProps) => {
+export const LogSessionModal = ({
+  isOpen,
+  onClose,
+  dogId,
+  dogName,
+  prefillType,
+  prefillCategory,
+}: LogSessionModalProps) => {
   const { createSession, isCreating } = useSessions(dogId);
   const { showToast } = useToast();
-  const [selectedType, setSelectedType] = useState<SessionType>('people');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedType, setSelectedType] = useState<SessionType>(prefillType ?? 'people');
+  const [selectedCategory, setSelectedCategory] = useState<string>(prefillCategory ?? '');
   const [selectedReaction, setSelectedReaction] = useState<ReactionLevel>('😊');
+  const [selectedPlace, setSelectedPlace] = useState<PlaceType>('Home');
+  const [selectedIntensity, setSelectedIntensity] = useState<Intensity>('low');
+  const [isNewToDog, setIsNewToDog] = useState<boolean>(false);
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState<string>('');
   const [photo, setPhoto] = useState<File | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
+  // Apply prefill values when they change (e.g. opening from different target cards)
+  useEffect(() => {
+    if (isOpen) {
+      if (prefillType) setSelectedType(prefillType);
+      if (prefillCategory) setSelectedCategory(prefillCategory);
+    }
+  }, [isOpen, prefillType, prefillCategory]);
+
+  const showNewToDog = selectedType === 'people' || selectedType === 'dogs';
+
   // Reset category when type changes
   const handleTypeChange = (type: SessionType) => {
     setSelectedType(type);
-    setSelectedCategory(''); // Reset category when type changes
+    setSelectedCategory('');
+    setIsNewToDog(false);
+    setFormError(null);
+  };
+
+  const resetForm = () => {
+    setSelectedType(prefillType ?? 'people');
+    setSelectedCategory(prefillCategory ?? '');
+    setSelectedReaction('😊');
+    setSelectedPlace('Home');
+    setSelectedIntensity('low');
+    setIsNewToDog(false);
+    setDate(new Date().toISOString().split('T')[0]);
+    setNotes('');
+    setPhoto(null);
     setFormError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
-    
+
     if (!selectedCategory) {
       setFormError('Please select a category');
       return;
@@ -50,23 +101,18 @@ export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionM
         type: selectedType,
         category: selectedCategory,
         reaction: selectedReaction,
+        placeType: selectedPlace,
+        intensity: selectedIntensity,
+        isNewToDog: showNewToDog ? isNewToDog : false,
         notes: notes || undefined,
         photo: photo || undefined,
       });
 
-      // Reset form
-      setSelectedType('people');
-      setSelectedCategory('');
-      setSelectedReaction('😊');
-      setDate(new Date().toISOString().split('T')[0]);
-      setNotes('');
-      setPhoto(null);
-      setFormError(null);
-      
+      resetForm();
       onClose();
-      showToast('Session logged successfully!', 'success');
+      showToast('Exposure logged successfully!', 'success');
     } catch {
-      setFormError('Failed to log session. Please try again.');
+      setFormError('Failed to log exposure. Please try again.');
     }
   };
 
@@ -78,7 +124,7 @@ export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionM
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Log Session for ${dogName}`} className="p-8">
+    <Modal isOpen={isOpen} onClose={onClose} title={`Log Exposure for ${dogName}`} className="p-8">
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Form Error */}
         {formError && (
@@ -89,7 +135,7 @@ export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionM
 
         {/* Date */}
         <div>
-          <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="date" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
             Date
           </label>
           <Input
@@ -102,10 +148,10 @@ export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionM
           />
         </div>
 
-        {/* Session Type */}
+        {/* Exposure Type */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Session Type
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            Exposure Type
           </label>
           <div className="grid grid-cols-2 gap-2">
             {(['people', 'dogs', 'environments', 'noises'] as SessionType[]).map((type) => (
@@ -113,11 +159,12 @@ export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionM
                 key={type}
                 type="button"
                 onClick={() => handleTypeChange(type)}
-                className={`p-3 rounded-lg border-2 transition-all flex items-center gap-2 ${
+                className={cn(
+                  'p-3 rounded-lg border-2 transition-all flex items-center gap-2',
                   selectedType === type
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
-                }`}
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                    : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                )}
               >
                 <span className="text-2xl">{SESSION_TYPE_EMOJI[type]}</span>
                 <span className="text-sm font-medium capitalize">{type}</span>
@@ -128,7 +175,7 @@ export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionM
 
         {/* Category */}
         <div>
-          <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="category" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
             Category
           </label>
           <select
@@ -139,7 +186,7 @@ export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionM
               setFormError(null);
             }}
             required
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100"
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-slate-800 dark:text-slate-100"
           >
             <option value="">Select a category</option>
             {SESSION_CATEGORIES[selectedType].map((category) => (
@@ -150,9 +197,79 @@ export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionM
           </select>
         </div>
 
+        {/* Place */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            Place
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {PLACE_TYPES.map((place) => (
+              <button
+                key={place}
+                type="button"
+                onClick={() => setSelectedPlace(place)}
+                className={cn(
+                  'px-3 py-1.5 rounded-full text-sm font-medium transition-all',
+                  selectedPlace === place
+                    ? 'bg-primary-500 text-white shadow-md'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                )}
+              >
+                {PLACE_TYPE_LABELS[place]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Intensity */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            Intensity
+          </label>
+          <div className="flex gap-2">
+            {INTENSITY_LEVELS.map((level) => (
+              <button
+                key={level}
+                type="button"
+                onClick={() => setSelectedIntensity(level)}
+                className={cn(
+                  'flex-1 px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all text-center',
+                  selectedIntensity === level
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                    : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300'
+                )}
+              >
+                {INTENSITY_LABELS[level]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* New to my dog? (People/Dogs only) */}
+        {showNewToDog && (
+          <div>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isNewToDog}
+                onChange={(e) => setIsNewToDog(e.target.checked)}
+                className="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-primary-500 focus:ring-primary-500"
+              />
+              <div>
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  New to my dog
+                </span>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  First time meeting this individual
+                </p>
+              </div>
+            </label>
+          </div>
+        )}
+
         {/* Reaction */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
             Reaction
           </label>
           <div className="flex justify-between gap-2">
@@ -161,15 +278,16 @@ export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionM
                 key={reaction}
                 type="button"
                 onClick={() => setSelectedReaction(reaction)}
-                className={`flex-1 p-3 rounded-lg border-2 transition-all ${
+                className={cn(
+                  'flex-1 p-3 rounded-lg border-2 transition-all',
                   selectedReaction === reaction
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 scale-110'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
-                }`}
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 scale-110'
+                    : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                )}
                 title={REACTION_LABELS[reaction]}
               >
                 <span className="text-3xl">{reaction}</span>
-                <p className="text-xs mt-1 text-gray-600 dark:text-gray-400">
+                <p className="text-xs mt-1 text-slate-600 dark:text-slate-400">
                   {REACTION_LABELS[reaction]}
                 </p>
               </button>
@@ -179,7 +297,7 @@ export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionM
 
         {/* Notes */}
         <div>
-          <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="notes" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
             Notes (optional)
           </label>
           <textarea
@@ -187,14 +305,14 @@ export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionM
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100"
-            placeholder="Add any additional notes about this session..."
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-slate-800 dark:text-slate-100"
+            placeholder="Add any additional notes about this exposure..."
           />
         </div>
 
         {/* Photo Upload */}
         <div>
-          <label htmlFor="photo" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="photo" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
             Photo (optional)
           </label>
           <Input
@@ -204,7 +322,7 @@ export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionM
             onChange={handlePhotoChange}
           />
           {photo && (
-            <div className="mt-2 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <div className="mt-2 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
               <span>{photo.name}</span>
               <button
                 type="button"
@@ -239,7 +357,7 @@ export const LogSessionModal = ({ isOpen, onClose, dogId, dogName }: LogSessionM
                 Logging...
               </>
             ) : (
-              'Log Session'
+              'Log Exposure'
             )}
           </Button>
         </div>

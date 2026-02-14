@@ -28,8 +28,8 @@ export function SegmentedControl<T extends string>({
           className={cn(
             'px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2',
             value === item.value
-              ? 'bg-blue-500 text-white shadow-md'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              ? 'bg-primary-500 text-white shadow-md'
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
           )}
         >
           {item.emoji && <span className="text-lg">{item.emoji}</span>}

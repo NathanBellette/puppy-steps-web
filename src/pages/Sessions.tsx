@@ -48,11 +48,11 @@ export const Sessions = () => {
       <div className="flex items-center justify-center min-h-96">
         <Card className="w-full max-w-md">
           <CardContent className="text-center py-8">
-            <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+            <Target className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
               No Dog Selected
             </h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-slate-500 dark:text-slate-400 mb-4">
               Please select a dog to view and log their socialization sessions.
             </p>
           </CardContent>
@@ -65,10 +65,10 @@ export const Sessions = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
             Session Log
           </h1>
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="text-slate-500 dark:text-slate-400">
             Log and track {selectedDog.name}'s socialisation sessions
           </p>
         </div>
@@ -87,8 +87,8 @@ export const Sessions = () => {
             className={cn(
               'px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2',
               typeFilter === filter.value
-                ? 'bg-blue-500 text-white shadow-md'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                ? 'bg-primary-500 text-white shadow-md'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
             )}
           >
             <span className="text-lg">{filter.emoji}</span>
@@ -113,7 +113,7 @@ export const Sessions = () => {
             <div className="space-y-3">
               {[...Array(5)].map((_, i) => (
                 <div key={i} className="animate-pulse">
-                  <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                  <div className="h-20 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
                 </div>
               ))}
             </div>
@@ -129,11 +129,11 @@ export const Sessions = () => {
             </div>
           ) : (
             <div className="text-center py-12">
-              <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+              <Calendar className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
                 {typeFilter === 'all' ? 'No sessions logged yet' : `No ${typeFilter} sessions yet`}
               </h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-4">
+              <p className="text-slate-500 dark:text-slate-400 mb-4">
                 {typeFilter === 'all'
                   ? `Start logging socialisation sessions to track ${selectedDog.name}'s progress.`
                   : `Try logging a ${typeFilter} session or change the filter.`}
@@ -164,7 +164,7 @@ export const Sessions = () => {
         title="Delete Session"
       >
         <div className="space-y-4">
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-slate-600 dark:text-slate-400">
             Are you sure you want to delete this session? This action cannot be undone.
           </p>
           <div className="flex gap-3">

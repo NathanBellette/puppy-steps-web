@@ -1,146 +1,162 @@
-import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Check, Plus } from 'lucide-react';
-import { Goal, SESSION_TYPE_EMOJI } from '@/types';
+import { Goal, SESSION_TYPE_EMOJI, SessionType } from '@/types';
+import { TargetProgress } from '@/services/targetProgress';
+import { Button } from '@/components/ui/Button';
 
 export interface GoalItemProps {
   goal: Goal;
-  onIncrement?: (goalId: string) => void;
-  onEdit?: (goalId: string) => void;
+  progress?: TargetProgress;
+  onLogExposure?: (type: SessionType, category: string) => void;
   className?: string;
   showTypeEmoji?: boolean;
+  /** Optional status text override (e.g. coaching tip) */
+  statusText?: string;
 }
 
-const GoalItem = ({ goal, onIncrement, onEdit, className, showTypeEmoji = false }: GoalItemProps) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const [isIncrementing, setIsIncrementing] = useState(false);
+function formatTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
+  return date.toLocaleDateString();
+}
 
-  // Type-specific colors handled inline where needed
+const GoalItem = ({
+  goal,
+  progress,
+  onLogExposure,
+  className,
+  showTypeEmoji = false,
+  statusText,
+}: GoalItemProps) => {
+  const calmCount = progress?.calmCount ?? 0;
+  const calmTarget = progress?.calmTarget ?? goal.calmTargetCount ?? goal.targetCount ?? 5;
+  const varietyCount = progress?.varietyCount ?? 0;
+  const varietyTarget = progress?.varietyTarget ?? goal.varietyTargetCount ?? 3;
+  const isComplete = progress?.isComplete ?? false;
+  const lastLogged = progress?.lastLogged ?? null;
 
-  const progressPercentage = goal.targetCount > 0 
-    ? (goal.currentCount / goal.targetCount) * 100 
-    : 0;
-
-  const handleIncrement = async () => {
-    if (onIncrement && !isIncrementing && !goal.isCompleted) {
-      setIsIncrementing(true);
-      try {
-        await onIncrement(goal.id);
-      } finally {
-        setIsIncrementing(false);
-      }
-    }
-  };
+  const calmPct = calmTarget > 0 ? Math.min((calmCount / calmTarget) * 100, 100) : 0;
+  const varietyPct = varietyTarget > 0 ? Math.min((varietyCount / varietyTarget) * 100, 100) : 0;
 
   return (
     <div
       className={cn(
-        'flex items-center space-x-3 p-4 rounded-lg border transition-all',
-        goal.isCompleted 
-          ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' 
-          : 'bg-white border-gray-200 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700',
+        'p-4 rounded-lg border transition-all',
+        isComplete
+          ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800'
+          : 'bg-white border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800',
         className
       )}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Type Emoji (optional) */}
-      {showTypeEmoji && (
-        <div className="flex-shrink-0 text-2xl">
-          {SESSION_TYPE_EMOJI[goal.type]}
-        </div>
-      )}
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex-1 min-w-0">
+      {/* Header row */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2 min-w-0">
+          {showTypeEmoji && (
+            <span className="text-xl flex-shrink-0">{SESSION_TYPE_EMOJI[goal.type]}</span>
+          )}
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className={cn(
-                'text-sm font-medium',
-                goal.isCompleted 
-                  ? 'text-green-900 dark:text-green-100' 
-                  : 'text-gray-900 dark:text-gray-100'
-              )}>
+              <h3
+                className={cn(
+                  'text-sm font-semibold',
+                  isComplete
+                    ? 'text-emerald-900 dark:text-emerald-100'
+                    : 'text-slate-900 dark:text-slate-100'
+                )}
+              >
                 {goal.category}
               </h3>
-              {goal.isCompleted && (
-                <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
-              )}
+              {isComplete && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 capitalize">
-              {goal.type}
-            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{goal.type}</p>
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="flex items-center gap-3">
-          <div className="flex-1">
-            <div className="relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-              <div 
-                className={cn(
-                  'absolute h-full transition-all duration-300 rounded-full',
-                  goal.isCompleted 
-                    ? 'bg-green-500' 
-                    : 'bg-blue-500'
-                )}
-                style={{ width: `${Math.min(progressPercentage, 100)}%` }}
-              />
-            </div>
-          </div>
-          <span className="text-xs font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">
-            {goal.currentCount}/{goal.targetCount}
+        {/* Log Exposure button */}
+        {onLogExposure && !isComplete && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onLogExposure(goal.type, goal.category)}
+            className="flex-shrink-0 ml-2"
+          >
+            <Plus className="w-3.5 h-3.5 mr-1" />
+            Log Exposure
+          </Button>
+        )}
+
+        {/* Completed badge */}
+        {isComplete && (
+          <span className="flex-shrink-0 px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 rounded-full">
+            Complete
           </span>
-        </div>
-
-        {goal.completedDate && (
-          <p className="mt-2 text-xs text-green-600 dark:text-green-400">
-            ✓ Completed {new Date(goal.completedDate).toLocaleDateString()}
-          </p>
         )}
       </div>
 
-      {/* Increment button */}
-      {onIncrement && !goal.isCompleted && (
-        <button
-          onClick={handleIncrement}
-          disabled={isIncrementing}
-          className={cn(
-            'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors',
-            'bg-blue-500 hover:bg-blue-600 text-white',
-            'disabled:opacity-50 disabled:cursor-not-allowed',
-            'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
-          )}
-          aria-label="Increment goal progress"
-        >
-          {isIncrementing ? (
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <Plus className="w-4 h-4" />
-          )}
-        </button>
-      )}
-
-      {/* Completed checkmark */}
-      {goal.isCompleted && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
-          <Check className="w-5 h-5 text-white" />
+      {/* Dual progress bars */}
+      <div className="space-y-2">
+        {/* Calm progress */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400 w-12">Calm</span>
+          <div className="flex-1">
+            <div className="relative h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+              <div
+                className={cn(
+                  'absolute h-full transition-all duration-300 rounded-full',
+                  isComplete ? 'bg-emerald-500' : 'bg-primary-500'
+                )}
+                style={{ width: `${calmPct}%` }}
+              />
+            </div>
+          </div>
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap w-10 text-right">
+            {calmCount}/{calmTarget}
+          </span>
         </div>
-      )}
 
-      {/* Edit button (shows on hover) */}
-      {onEdit && isHovered && !goal.isCompleted && (
-        <button
-          onClick={() => onEdit(goal.id)}
-          className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-          aria-label="Edit goal"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
-        </button>
-      )}
+        {/* Variety progress */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400 w-12">Variety</span>
+          <div className="flex-1">
+            <div className="relative h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+              <div
+                className={cn(
+                  'absolute h-full transition-all duration-300 rounded-full',
+                  isComplete ? 'bg-emerald-500' : 'bg-accent-500'
+                )}
+                style={{ width: `${varietyPct}%` }}
+              />
+            </div>
+          </div>
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap w-10 text-right">
+            {varietyCount}/{varietyTarget}
+          </span>
+        </div>
+      </div>
+
+      {/* Status line */}
+      <div className="mt-2">
+        {statusText ? (
+          <p className="text-xs text-slate-500 dark:text-slate-400 italic">{statusText}</p>
+        ) : isComplete && lastLogged ? (
+          <p className="text-xs text-emerald-600 dark:text-emerald-400">
+            Completed {formatTimeAgo(lastLogged)}
+          </p>
+        ) : lastLogged ? (
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Last logged: {formatTimeAgo(lastLogged)}
+          </p>
+        ) : (
+          <p className="text-xs text-slate-400 dark:text-slate-500 italic">
+            No exposures yet. Start small.
+          </p>
+        )}
+      </div>
     </div>
   );
 };

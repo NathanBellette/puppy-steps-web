@@ -4,9 +4,12 @@ import { Button } from '@/components/ui/Button';
 import { GoalItem } from '@/components/ui/GoalItem';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { LogSessionModal } from '@/components/LogSessionModal';
 import { useDogs } from '@/hooks/useDogProfile';
 import { useGoals } from '@/hooks/useGoals';
+import { useTargetProgress } from '@/hooks/useTargetProgress';
 import { SessionType, SESSION_TYPE_EMOJI } from '@/types';
+import { getCoachingTip } from '@/services/targetProgress';
 import { Target, AlertCircle, Plus } from 'lucide-react';
 
 const typeLabels: Record<SessionType, string> = {
@@ -25,13 +28,25 @@ const segmentItems = (['people', 'dogs', 'environments', 'noises'] as SessionTyp
 export const Goals = () => {
   const { selectedDog } = useDogs();
   const [selectedType, setSelectedType] = useState<SessionType>('people');
-  const { goals, isLoading, incrementGoal, initializeGoals, isInitializing } = useGoals(selectedDog?.id);
+  const { goals, isLoading, initializeGoals, isInitializing } = useGoals(selectedDog?.id);
+  const { progress, categoryProgress } = useTargetProgress(selectedDog?.id);
+
+  // Log Exposure modal state
+  const [logModalOpen, setLogModalOpen] = useState(false);
+  const [prefillType, setPrefillType] = useState<SessionType | undefined>();
+  const [prefillCategory, setPrefillCategory] = useState<string | undefined>();
 
   const filteredGoals = goals.filter(goal => goal.type === selectedType);
-  const completedCount = filteredGoals.filter(g => g.isCompleted).length;
-  const progressPercentage = filteredGoals.length > 0 
-    ? (completedCount / filteredGoals.length) * 100 
-    : 0;
+  const catProgress = categoryProgress[selectedType];
+  const completedCount = catProgress?.completed ?? 0;
+  const totalCount = catProgress?.total ?? filteredGoals.length;
+  const progressPercentage = catProgress?.percentage ?? 0;
+
+  const handleLogExposure = (type: SessionType, category: string) => {
+    setPrefillType(type);
+    setPrefillCategory(category);
+    setLogModalOpen(true);
+  };
 
   const handleInitializeGoals = async () => {
     if (selectedDog?.id) {
@@ -51,7 +66,7 @@ export const Goals = () => {
             <EmptyState
               icon={Target}
               title="No Dog Selected"
-              description="Please select a dog to view and track their socialization goals."
+              description="Please select a dog to view and track their socialisation targets."
             />
           </CardContent>
         </Card>
@@ -63,29 +78,29 @@ export const Goals = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Goals & Milestones
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            Plan
           </h1>
-          <p className="text-gray-500 dark:text-gray-400">
-            Track {selectedDog.name}'s socialization progress
+          <p className="text-slate-500 dark:text-slate-400">
+            Track {selectedDog.name}'s socialisation targets
           </p>
         </div>
       </div>
 
       {/* Initialize Goals if empty */}
       {!isLoading && goals.length === 0 && (
-        <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800">
+        <Card className="border-primary-200 bg-primary-50 dark:bg-primary-900/20 dark:border-primary-800">
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
-              <AlertCircle className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="h-6 w-6 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                  No Goals Yet
+                <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
+                  No Targets Yet
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Start tracking {selectedDog.name}'s socialization journey with 29 predefined goals across 4 categories.
+                <p className="text-slate-600 dark:text-slate-400 mb-4">
+                  Start tracking {selectedDog.name}'s socialisation journey with 29 predefined targets across 4 categories.
                 </p>
-                <Button 
+                <Button
                   onClick={handleInitializeGoals}
                   disabled={isInitializing}
                   className="w-full sm:w-auto"
@@ -93,12 +108,12 @@ export const Goals = () => {
                   {isInitializing ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                      Creating Goals...
+                      Creating Targets...
                     </>
                   ) : (
                     <>
                       <Plus className="h-4 w-4 mr-2" />
-                      Create All Goals
+                      Create All Targets
                     </>
                   )}
                 </Button>
@@ -122,22 +137,22 @@ export const Goals = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                     {typeLabels[selectedType]} Progress
                   </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {completedCount} of {filteredGoals.length} goals completed
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {completedCount} of {totalCount} targets complete
                   </p>
                 </div>
                 <div className="text-right">
-                  <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                    {Math.round(progressPercentage)}%
+                  <div className="text-3xl font-bold text-primary-600 dark:text-primary-400">
+                    {progressPercentage}%
                   </div>
                 </div>
               </div>
-              <div className="relative h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                <div 
-                  className="absolute h-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-500"
+              <div className="relative h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div
+                  className="absolute h-full bg-gradient-to-r from-primary-500 to-accent-500 transition-all duration-500"
                   style={{ width: `${progressPercentage}%` }}
                 />
               </div>
@@ -149,10 +164,10 @@ export const Goals = () => {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <span className="text-2xl mr-2">{SESSION_TYPE_EMOJI[selectedType]}</span>
-                {typeLabels[selectedType]} Goals
+                {typeLabels[selectedType]} Targets
               </CardTitle>
               <CardDescription>
-                Tap the + button to increment progress toward each goal
+                Log exposures to build calm, confident habits across different contexts.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -160,30 +175,47 @@ export const Goals = () => {
                 <div className="space-y-3">
                   {[...Array(5)].map((_, i) => (
                     <div key={i} className="animate-pulse">
-                      <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                      <div className="h-24 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
                     </div>
                   ))}
                 </div>
               ) : filteredGoals.length > 0 ? (
                 <div className="space-y-3">
-                  {filteredGoals.map((goal) => (
-                    <GoalItem
-                      key={goal.id}
-                      goal={goal}
-                      onIncrement={incrementGoal}
-                    />
-                  ))}
+                  {filteredGoals.map((goal) => {
+                    const goalProgress = progress[goal.id];
+                    return (
+                      <GoalItem
+                        key={goal.id}
+                        goal={goal}
+                        progress={goalProgress}
+                        onLogExposure={handleLogExposure}
+                        statusText={goalProgress ? getCoachingTip(goalProgress) : undefined}
+                      />
+                    );
+                  })}
                 </div>
               ) : (
                 <EmptyState
                   icon={Target}
-                  title="No Goals in This Category"
-                  description={`Goals for ${typeLabels[selectedType].toLowerCase()} will appear here.`}
+                  title="No Targets in This Category"
+                  description={`Targets for ${typeLabels[selectedType].toLowerCase()} will appear here.`}
                 />
               )}
             </CardContent>
           </Card>
         </>
+      )}
+
+      {/* Log Exposure Modal */}
+      {selectedDog && (
+        <LogSessionModal
+          isOpen={logModalOpen}
+          onClose={() => setLogModalOpen(false)}
+          dogId={selectedDog.id}
+          dogName={selectedDog.name}
+          prefillType={prefillType}
+          prefillCategory={prefillCategory}
+        />
       )}
     </div>
   );

@@ -9,7 +9,6 @@ import {
   deleteGoal,
   getGoal,
   createGoalsBatch,
-  incrementGoalCount,
 } from '@/lib/firestore';
 import { Goal, GoalFormData, createInitialGoalsForDog } from '@/types';
 import { computeGoalStats } from '@/services/goalStats';
@@ -34,7 +33,9 @@ export const useGoals = (dogId?: string) => {
       return createGoal({
         ...goalData,
         userId: user!.uid,
-        targetCount: goalData.targetCount || 1,
+        calmTargetCount: goalData.calmTargetCount ?? 5,
+        varietyTargetCount: goalData.varietyTargetCount ?? 3,
+        targetCount: goalData.targetCount || 5,
         currentCount: 0,
         isCompleted: false,
       });
@@ -60,16 +61,6 @@ export const useGoals = (dogId?: string) => {
         completedDate: isCompleted ? new Date() : undefined,
         updatedAt: new Date(),
       });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['goals', user?.uid, dogId] });
-    },
-  });
-
-  // Atomic increment using Firestore's increment() to avoid stale state
-  const incrementGoalMutation = useMutation({
-    mutationFn: async (goalId: string) => {
-      return incrementGoalCount(goalId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals', user?.uid, dogId] });
@@ -103,13 +94,11 @@ export const useGoals = (dogId?: string) => {
     createGoal: createGoalMutation.mutateAsync,
     updateGoal: updateGoalMutation.mutateAsync,
     toggleGoal: toggleGoalMutation.mutateAsync,
-    incrementGoal: incrementGoalMutation.mutateAsync,
     initializeGoals: initializeGoalsMutation.mutateAsync,
     deleteGoal: deleteGoalMutation.mutateAsync,
     isCreating: createGoalMutation.isPending,
     isUpdating: updateGoalMutation.isPending,
     isToggling: toggleGoalMutation.isPending,
-    isIncrementing: incrementGoalMutation.isPending,
     isInitializing: initializeGoalsMutation.isPending,
     isDeleting: deleteGoalMutation.isPending,
   };

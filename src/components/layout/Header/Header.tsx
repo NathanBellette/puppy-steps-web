@@ -16,7 +16,7 @@ export const Header = () => {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
+    <header className="bg-white dark:bg-slate-900 shadow-sm border-b border-slate-200 dark:border-slate-700">
       <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Left side — App name (mobile only) + Dog selector */}
         <div className="flex items-center">
@@ -61,14 +61,14 @@ export const Header = () => {
           <div className="relative">
             <div className="flex items-center space-x-3">
               <div className="hidden sm:block">
-                <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
                   {user?.displayName || 'User'}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
+                <div className="text-xs text-slate-500 dark:text-slate-400">
                   {user?.email}
                 </div>
               </div>
-              <div className="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+              <div className="h-8 w-8 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center">
                 {user?.photoURL ? (
                   <img
                     src={user.photoURL}
@@ -76,7 +76,7 @@ export const Header = () => {
                     className="h-8 w-8 rounded-full"
                   />
                 ) : (
-                  <User className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                  <User className="h-5 w-5 text-slate-600 dark:text-slate-400" />
                 )}
               </div>
             </div>

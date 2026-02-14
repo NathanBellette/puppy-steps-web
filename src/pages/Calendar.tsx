@@ -11,10 +11,10 @@ import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Target } from 'luc
 const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 const TYPE_DOT_COLORS: Record<SessionType, string> = {
-  people: 'bg-blue-500',
-  dogs: 'bg-green-500',
-  environments: 'bg-purple-500',
-  noises: 'bg-orange-500',
+  people: 'bg-indigo-500',
+  dogs: 'bg-violet-500',
+  environments: 'bg-emerald-500',
+  noises: 'bg-amber-500',
 };
 
 function getMonthDays(year: number, month: number) {
@@ -120,11 +120,11 @@ export const Calendar = () => {
       <div className="flex items-center justify-center min-h-96">
         <Card className="w-full max-w-md">
           <CardContent className="text-center py-8">
-            <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+            <Target className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
               No Dog Selected
             </h3>
-            <p className="text-gray-500 dark:text-gray-400">
+            <p className="text-slate-500 dark:text-slate-400">
               Please select a dog to view their session calendar.
             </p>
           </CardContent>
@@ -136,10 +136,10 @@ export const Calendar = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
           Calendar
         </h1>
-        <p className="text-gray-500 dark:text-gray-400">
+        <p className="text-slate-500 dark:text-slate-400">
           View {selectedDog.name}'s socialisation sessions over time
         </p>
       </div>
@@ -169,7 +169,7 @@ export const Calendar = () => {
             <div className="animate-pulse">
               <div className="grid grid-cols-7 gap-1">
                 {[...Array(42)].map((_, i) => (
-                  <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded" />
+                  <div key={i} className="h-16 bg-slate-200 dark:bg-slate-700 rounded" />
                 ))}
               </div>
             </div>
@@ -180,7 +180,7 @@ export const Calendar = () => {
                 {DAYS_OF_WEEK.map((day) => (
                   <div
                     key={day}
-                    className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 py-2"
+                    className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 py-2"
                   >
                     {day}
                   </div>
@@ -202,19 +202,19 @@ export const Calendar = () => {
                       className={cn(
                         'relative flex flex-col items-center justify-start p-1 sm:p-2 min-h-[3.5rem] sm:min-h-[4rem] rounded-lg border transition-all text-sm',
                         isCurrentMonth
-                          ? 'text-gray-900 dark:text-gray-100'
-                          : 'text-gray-400 dark:text-gray-600',
+                          ? 'text-slate-900 dark:text-slate-100'
+                          : 'text-slate-400 dark:text-slate-600',
                         isSelected
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500'
-                          : 'border-transparent hover:bg-gray-50 dark:hover:bg-gray-800',
-                        isTodayDate && !isSelected && 'border-blue-300 dark:border-blue-700'
+                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 ring-1 ring-primary-500'
+                          : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800',
+                        isTodayDate && !isSelected && 'border-primary-300 dark:border-primary-700'
                       )}
                     >
                       <span
                         className={cn(
                           'text-xs sm:text-sm font-medium',
                           isTodayDate &&
-                            'bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center'
+                            'bg-primary-500 text-white rounded-full w-6 h-6 flex items-center justify-center'
                         )}
                       >
                         {date.getDate()}
@@ -241,13 +241,13 @@ export const Calendar = () => {
               </div>
 
               {/* Legend */}
-              <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Legend:</span>
+              <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Legend:</span>
                 {(Object.entries(TYPE_DOT_COLORS) as [SessionType, string][]).map(
                   ([type, colorClass]) => (
                     <div key={type} className="flex items-center gap-1.5">
                       <span className={cn('w-2 h-2 rounded-full', colorClass)} />
-                      <span className="text-xs text-gray-600 dark:text-gray-400 capitalize">
+                      <span className="text-xs text-slate-600 dark:text-slate-400 capitalize">
                         {SESSION_TYPE_EMOJI[type]} {type}
                       </span>
                     </div>

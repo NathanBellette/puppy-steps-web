@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { GoalItem } from './GoalItem';
 import { Goal } from '@/types';
+import { TargetProgress } from '@/services/targetProgress';
 
 // Mock the utils functions
 vi.mock('@/lib/utils', () => ({
@@ -15,11 +16,26 @@ describe('GoalItem', () => {
     dogId: 'dog-1',
     category: 'Men',
     type: 'people',
-    targetCount: 1,
+    calmTargetCount: 5,
+    varietyTargetCount: 3,
+    targetCount: 5,
     currentCount: 0,
     isCompleted: false,
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
+  };
+
+  const mockProgress: TargetProgress = {
+    goalId: 'goal-1',
+    category: 'Men',
+    type: 'people',
+    calmCount: 2,
+    calmTarget: 5,
+    varietyCount: 1,
+    varietyTarget: 3,
+    isComplete: false,
+    lastLogged: new Date('2024-01-10'),
+    varietyKeys: new Set(['context:Park:low']),
   };
 
   const mockCompletedGoal: Goal = {
@@ -27,108 +43,121 @@ describe('GoalItem', () => {
     id: 'goal-2',
     category: 'Park',
     type: 'environments',
-    currentCount: 1,
     isCompleted: true,
     completedDate: new Date('2024-01-15'),
   };
 
-  const mockOnIncrement = vi.fn();
+  const mockCompletedProgress: TargetProgress = {
+    goalId: 'goal-2',
+    category: 'Park',
+    type: 'environments',
+    calmCount: 5,
+    calmTarget: 5,
+    varietyCount: 3,
+    varietyTarget: 3,
+    isComplete: true,
+    lastLogged: new Date('2024-01-15'),
+    varietyKeys: new Set(['context:Park:low', 'context:Park:medium', 'context:Street:low']),
+  };
+
+  const mockOnLogExposure = vi.fn();
 
   beforeEach(() => {
-    mockOnIncrement.mockClear();
+    mockOnLogExposure.mockClear();
   });
 
   it('renders goal with correct category and type', () => {
-    render(<GoalItem goal={mockGoal} onIncrement={mockOnIncrement} />);
+    render(<GoalItem goal={mockGoal} progress={mockProgress} onLogExposure={mockOnLogExposure} />);
     
     expect(screen.getByText('Men')).toBeInTheDocument();
     expect(screen.getByText('people')).toBeInTheDocument();
   });
 
-  it('renders progress bar with correct values', () => {
-    render(<GoalItem goal={mockGoal} onIncrement={mockOnIncrement} />);
+  it('renders dual progress bars with correct values', () => {
+    render(<GoalItem goal={mockGoal} progress={mockProgress} onLogExposure={mockOnLogExposure} />);
     
-    expect(screen.getByText('0/1')).toBeInTheDocument();
+    expect(screen.getByText('2/5')).toBeInTheDocument();
+    expect(screen.getByText('1/3')).toBeInTheDocument();
+    expect(screen.getByText('Calm')).toBeInTheDocument();
+    expect(screen.getByText('Variety')).toBeInTheDocument();
   });
 
   it('renders different goal types correctly', () => {
-    const { rerender } = render(<GoalItem goal={mockGoal} onIncrement={mockOnIncrement} />);
+    const { rerender } = render(<GoalItem goal={mockGoal} progress={mockProgress} onLogExposure={mockOnLogExposure} />);
     expect(screen.getByText('people')).toBeInTheDocument();
 
-    rerender(<GoalItem goal={{ ...mockGoal, type: 'dogs' }} onIncrement={mockOnIncrement} />);
+    rerender(<GoalItem goal={{ ...mockGoal, type: 'dogs' }} progress={{ ...mockProgress, type: 'dogs' }} onLogExposure={mockOnLogExposure} />);
     expect(screen.getByText('dogs')).toBeInTheDocument();
 
-    rerender(<GoalItem goal={{ ...mockGoal, type: 'environments' }} onIncrement={mockOnIncrement} />);
+    rerender(<GoalItem goal={{ ...mockGoal, type: 'environments' }} progress={{ ...mockProgress, type: 'environments' }} onLogExposure={mockOnLogExposure} />);
     expect(screen.getByText('environments')).toBeInTheDocument();
 
-    rerender(<GoalItem goal={{ ...mockGoal, type: 'noises' }} onIncrement={mockOnIncrement} />);
+    rerender(<GoalItem goal={{ ...mockGoal, type: 'noises' }} progress={{ ...mockProgress, type: 'noises' }} onLogExposure={mockOnLogExposure} />);
     expect(screen.getByText('noises')).toBeInTheDocument();
   });
 
-  it('shows incomplete state correctly', () => {
-    render(<GoalItem goal={mockGoal} onIncrement={mockOnIncrement} />);
+  it('shows Log Exposure button for incomplete goals', () => {
+    render(<GoalItem goal={mockGoal} progress={mockProgress} onLogExposure={mockOnLogExposure} />);
     
-    const incrementButton = screen.getByRole('button', { name: /increment/i });
-    expect(incrementButton).toBeInTheDocument();
+    const logButton = screen.getByRole('button', { name: /log exposure/i });
+    expect(logButton).toBeInTheDocument();
   });
 
   it('shows completed state correctly', () => {
-    render(<GoalItem goal={mockCompletedGoal} onIncrement={mockOnIncrement} />);
+    render(<GoalItem goal={mockCompletedGoal} progress={mockCompletedProgress} onLogExposure={mockOnLogExposure} />);
     
-    expect(screen.getByText('1/1')).toBeInTheDocument();
+    expect(screen.getByText('5/5')).toBeInTheDocument();
+    expect(screen.getByText('3/3')).toBeInTheDocument();
     expect(screen.getByText('Park')).toBeInTheDocument();
+    expect(screen.getByText('Complete')).toBeInTheDocument();
   });
 
-  it('calls onIncrement when increment button is clicked', async () => {
+  it('calls onLogExposure when Log Exposure button is clicked', async () => {
     const user = userEvent.setup();
-    render(<GoalItem goal={mockGoal} onIncrement={mockOnIncrement} />);
+    render(<GoalItem goal={mockGoal} progress={mockProgress} onLogExposure={mockOnLogExposure} />);
     
-    const incrementButton = screen.getByRole('button', { name: /increment/i });
-    await user.click(incrementButton);
+    const logButton = screen.getByRole('button', { name: /log exposure/i });
+    await user.click(logButton);
     
-    expect(mockOnIncrement).toHaveBeenCalledWith(mockGoal.id);
+    expect(mockOnLogExposure).toHaveBeenCalledWith('people', 'Men');
   });
 
-  it('renders progress bar with correct width for partial completion', () => {
-    const partialGoal = { ...mockGoal, currentCount: 2, targetCount: 5 };
-    render(<GoalItem goal={partialGoal} onIncrement={mockOnIncrement} />);
+  it('does not show Log Exposure button for completed goals', () => {
+    render(<GoalItem goal={mockCompletedGoal} progress={mockCompletedProgress} onLogExposure={mockOnLogExposure} />);
     
-    expect(screen.getByText('2/5')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /log exposure/i })).not.toBeInTheDocument();
   });
 
-  it('renders completed goal with checkmark', () => {
-    render(<GoalItem goal={mockCompletedGoal} onIncrement={mockOnIncrement} />);
+  it('shows "No exposures yet" when no progress', () => {
+    const noProgress: TargetProgress = {
+      ...mockProgress,
+      calmCount: 0,
+      varietyCount: 0,
+      lastLogged: null,
+      varietyKeys: new Set(),
+    };
+    render(<GoalItem goal={mockGoal} progress={noProgress} onLogExposure={mockOnLogExposure} />);
     
-    // Check for checkmark icon (it should be present in completed goals)
-    const checkIcon = screen.getByText((_content, element) => {
-      return element?.textContent === '✓ Completed 1/15/2024';
-    });
-    expect(checkIcon).toBeInTheDocument();
+    expect(screen.getByText('No exposures yet. Start small.')).toBeInTheDocument();
   });
 
-  it('applies correct styling for different goal types', () => {
-    const { rerender } = render(<GoalItem goal={mockGoal} onIncrement={mockOnIncrement} />);
+  it('shows status text when provided', () => {
+    render(
+      <GoalItem
+        goal={mockGoal}
+        progress={mockProgress}
+        onLogExposure={mockOnLogExposure}
+        statusText="Try a new context (cafe, park)"
+      />
+    );
     
-    // People goal should have blue styling
-    expect(screen.getByText('people')).toBeInTheDocument();
-    
-    rerender(<GoalItem goal={{ ...mockGoal, type: 'environments' }} onIncrement={mockOnIncrement} />);
-    // Environments goal should have purple styling
-    expect(screen.getByText('environments')).toBeInTheDocument();
+    expect(screen.getByText('Try a new context (cafe, park)')).toBeInTheDocument();
   });
 
-  it('handles goals without completion date gracefully', () => {
-    const goalWithoutCompletion = { ...mockGoal, isCompleted: false };
-    render(<GoalItem goal={goalWithoutCompletion} onIncrement={mockOnIncrement} />);
+  it('applies correct styling for completed goals', () => {
+    render(<GoalItem goal={mockCompletedGoal} progress={mockCompletedProgress} />);
     
-    expect(screen.getByText('Men')).toBeInTheDocument();
-    expect(screen.getByText('0/1')).toBeInTheDocument();
-  });
-
-  it('has proper accessibility attributes', () => {
-    render(<GoalItem goal={mockGoal} onIncrement={mockOnIncrement} />);
-    
-    const incrementButton = screen.getByRole('button', { name: /increment/i });
-    expect(incrementButton).toHaveAttribute('aria-label');
+    expect(screen.getByText('Park')).toBeInTheDocument();
+    expect(screen.getByText('Complete')).toBeInTheDocument();
   });
 });

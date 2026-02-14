@@ -11,7 +11,6 @@ import {
   orderBy,
   limit,
   writeBatch,
-  increment,
   Timestamp,
   QueryConstraint,
   DocumentData,
@@ -56,6 +55,26 @@ function convertTimestamps<T>(data: DocumentData): T {
   // Normalize session type casing
   if ('type' in converted && typeof converted['type'] === 'string') {
     converted['type'] = normalizeSessionType(converted['type'] as string);
+  }
+
+  // Default missing session fields for backward compatibility
+  if ('reaction' in converted) {
+    // This looks like a Session document
+    if (!('placeType' in converted) || converted['placeType'] === undefined) {
+      converted['placeType'] = 'Other';
+    }
+    if (!('intensity' in converted) || converted['intensity'] === undefined) {
+      converted['intensity'] = 'low';
+    }
+    if (!('isNewToDog' in converted) || converted['isNewToDog'] === undefined) {
+      converted['isNewToDog'] = false;
+    }
+  }
+
+  // Default missing goal fields for backward compatibility
+  if ('targetCount' in converted && !('calmTargetCount' in converted)) {
+    converted['calmTargetCount'] = (converted['targetCount'] as number) || 5;
+    converted['varietyTargetCount'] = 3;
   }
 
   return converted as T;
@@ -263,27 +282,4 @@ export const createGoalsBatch = async (
   await batch.commit();
 };
 
-/**
- * Atomically increments a goal's currentCount and auto-completes if target reached.
- * Uses Firestore's atomic increment() to avoid stale state issues.
- */
-export const incrementGoalCount = async (goalId: string): Promise<void> => {
-  const docRef = doc(db, COLLECTIONS.GOALS, goalId);
-
-  // First, read the current state to check if we should auto-complete
-  const goalSnap = await getDoc(docRef);
-  if (!goalSnap.exists()) {
-    throw new Error('Goal not found');
-  }
-
-  const goalData = goalSnap.data();
-  const newCount = (goalData.currentCount || 0) + 1;
-  const shouldComplete = newCount >= (goalData.targetCount || 1);
-
-  await updateDoc(docRef, {
-    currentCount: increment(1),
-    isCompleted: shouldComplete,
-    ...(shouldComplete ? { completedDate: new Date() } : {}),
-    updatedAt: new Date(),
-  });
-};
+// incrementGoalCount removed — progress is now computed from sessions via computeTargetProgress

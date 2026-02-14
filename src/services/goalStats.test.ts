@@ -9,6 +9,8 @@ function makeGoal(overrides: Partial<Goal> = {}): Goal {
     dogId: 'd-1',
     category: 'Children',
     type: 'people',
+    calmTargetCount: 5,
+    varietyTargetCount: 3,
     isCompleted: false,
     targetCount: 3,
     currentCount: 0,

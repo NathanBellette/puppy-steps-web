@@ -72,16 +72,16 @@ export const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="mx-auto h-12 w-12 rounded-lg bg-primary-500 flex items-center justify-center">
             <span className="text-white font-bold text-xl">P</span>
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-gray-100">
+          <h2 className="mt-6 text-3xl font-bold text-slate-900 dark:text-slate-100">
             {isSignUp ? 'Create your account' : 'Sign in to your account'}
           </h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
             {isSignUp ? 'Start tracking your dog\'s socialization progress' : 'Welcome back to PuppySteps'}
           </p>
         </div>
@@ -105,7 +105,7 @@ export const AuthPage = () => {
             {isSignUp ? (
               <form onSubmit={signUpForm.handleSubmit(onSubmitSignUp)} className="space-y-4">
                 <div>
-                  <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label htmlFor="displayName" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                     Full Name
                   </label>
                   <Input
@@ -124,7 +124,7 @@ export const AuthPage = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                     Email Address
                   </label>
                   <Input
@@ -143,7 +143,7 @@ export const AuthPage = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                     Password
                   </label>
                   <Input
@@ -172,7 +172,7 @@ export const AuthPage = () => {
             ) : (
               <form onSubmit={signInForm.handleSubmit(onSubmitSignIn)} className="space-y-4">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                     Email Address
                   </label>
                   <Input
@@ -191,7 +191,7 @@ export const AuthPage = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                     Password
                   </label>
                   <Input

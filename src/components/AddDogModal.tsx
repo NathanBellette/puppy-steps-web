@@ -87,7 +87,7 @@ export const AddDogModal = ({ isOpen, onClose }: AddDogModalProps) => {
 
         {/* Name */}
         <div>
-          <label htmlFor="dog-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="dog-name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
             Name *
           </label>
           <Input
@@ -103,7 +103,7 @@ export const AddDogModal = ({ isOpen, onClose }: AddDogModalProps) => {
 
         {/* Age */}
         <div>
-          <label htmlFor="dog-age" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="dog-age" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
             Age (in months) *
           </label>
           <Input
@@ -117,14 +117,14 @@ export const AddDogModal = ({ isOpen, onClose }: AddDogModalProps) => {
             required
             disabled={isCreating}
           />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Enter age in months (e.g., 6 months old)
           </p>
         </div>
 
         {/* Breed */}
         <div>
-          <label htmlFor="dog-breed" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="dog-breed" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
             Breed *
           </label>
           <Input
@@ -140,7 +140,7 @@ export const AddDogModal = ({ isOpen, onClose }: AddDogModalProps) => {
 
         {/* Photo */}
         <div>
-          <label htmlFor="dog-photo" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="dog-photo" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
             Photo (optional)
           </label>
           <Input
@@ -151,7 +151,7 @@ export const AddDogModal = ({ isOpen, onClose }: AddDogModalProps) => {
             disabled={isCreating}
           />
           {photo && (
-            <div className="mt-2 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <div className="mt-2 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
               <span>{photo.name}</span>
               <button
                 type="button"

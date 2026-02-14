@@ -15,13 +15,13 @@ describe('Button', () => {
     expect(screen.getByRole('button')).toHaveClass('bg-red-500');
 
     rerender(<Button variant="outline">Outline</Button>);
-    expect(screen.getByRole('button')).toHaveClass('border', 'border-gray-300');
+    expect(screen.getByRole('button')).toHaveClass('border', 'border-slate-300');
 
     rerender(<Button variant="secondary">Secondary</Button>);
-    expect(screen.getByRole('button')).toHaveClass('bg-secondary-500');
+    expect(screen.getByRole('button')).toHaveClass('bg-accent-500');
 
     rerender(<Button variant="ghost">Ghost</Button>);
-    expect(screen.getByRole('button')).toHaveClass('hover:bg-gray-100');
+    expect(screen.getByRole('button')).toHaveClass('hover:bg-slate-100');
 
     rerender(<Button variant="link">Link</Button>);
     expect(screen.getByRole('button')).toHaveClass('text-primary-500');

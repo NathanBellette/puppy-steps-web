@@ -14,7 +14,7 @@ const Progress = forwardRef<HTMLDivElement, ProgressProps>(
       <div
         ref={ref}
         className={cn(
-          'relative h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800',
+          'relative h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800',
           className
         )}
         {...props}
@@ -73,7 +73,7 @@ const CircularProgress = forwardRef<HTMLDivElement, CircularProgressProps>(
             stroke="currentColor"
             strokeWidth={strokeWidth}
             fill="transparent"
-            className="text-gray-200 dark:text-gray-700"
+            className="text-slate-200 dark:text-slate-700"
           />
           {/* Progress circle */}
           <circle
@@ -91,7 +91,7 @@ const CircularProgress = forwardRef<HTMLDivElement, CircularProgressProps>(
         </svg>
         {showPercentage && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <span className="text-lg font-semibold text-slate-900 dark:text-slate-100">
               {Math.round(percentage)}%
             </span>
           </div>

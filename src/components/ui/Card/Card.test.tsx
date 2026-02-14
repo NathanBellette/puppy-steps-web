@@ -14,7 +14,7 @@ describe('Card Components', () => {
       render(<Card data-testid="card">Card content</Card>);
       const card = screen.getByTestId('card');
       expect(card).toBeInTheDocument();
-      expect(card).toHaveClass('rounded-lg', 'border', 'border-gray-200', 'bg-white');
+      expect(card).toHaveClass('rounded-lg', 'border', 'border-slate-200', 'bg-white');
     });
 
     it('applies custom className', () => {
@@ -67,7 +67,7 @@ describe('Card Components', () => {
     it('renders with correct styling', () => {
       render(<CardDescription data-testid="description">Description text</CardDescription>);
       const description = screen.getByTestId('description');
-      expect(description).toHaveClass('text-sm', 'text-gray-500');
+      expect(description).toHaveClass('text-sm', 'text-slate-500');
     });
 
     it('renders description text correctly', () => {

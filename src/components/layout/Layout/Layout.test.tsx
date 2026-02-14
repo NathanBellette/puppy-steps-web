@@ -63,7 +63,7 @@ describe('Layout', () => {
     render(<LayoutWrapper />);
     
     const layout = screen.getByTestId('sidebar').parentElement;
-    expect(layout).toHaveClass('min-h-screen', 'bg-gray-50', 'dark:bg-gray-900');
+    expect(layout).toHaveClass('min-h-screen', 'bg-slate-50', 'dark:bg-slate-950');
   });
 
   it('renders mobile navigation', () => {

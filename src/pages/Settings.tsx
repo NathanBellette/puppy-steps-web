@@ -78,10 +78,10 @@ export const Settings = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
           Settings
         </h1>
-        <p className="text-gray-500 dark:text-gray-400">
+        <p className="text-slate-500 dark:text-slate-400">
           Manage your account and application preferences
         </p>
       </div>
@@ -93,13 +93,13 @@ export const Settings = () => {
           <CardDescription>Your account information</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <User className="h-10 w-10 text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 rounded-full p-2" />
+          <div className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+            <User className="h-10 w-10 text-primary-600 dark:text-primary-400 bg-primary-100 dark:bg-primary-900/30 rounded-full p-2" />
             <div className="flex-1">
-              <p className="font-medium text-gray-900 dark:text-gray-100">
+              <p className="font-medium text-slate-900 dark:text-slate-100">
                 {user?.email || 'Unknown'}
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
                 Signed in
               </p>
             </div>
@@ -127,15 +127,15 @@ export const Settings = () => {
               {dogs.map((dog) => (
                 <div
                   key={dog.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className="flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <DogAvatar name={dog.name} photoUrl={dog.photoUrl} size="md" />
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-gray-100">
+                      <p className="font-medium text-slate-900 dark:text-slate-100">
                         {dog.name}
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
                         {dog.breed} • {dog.age} months old
                       </p>
                     </div>
@@ -174,11 +174,11 @@ export const Settings = () => {
         <CardContent className="space-y-1">
           <SettingsListItem
             icon={isDarkMode ? Moon : Sun}
-            iconColor={isDarkMode ? 'text-purple-600 dark:text-purple-400' : 'text-yellow-600 dark:text-yellow-400'}
+            iconColor={isDarkMode ? 'text-accent-600 dark:text-accent-400' : 'text-amber-600 dark:text-amber-400'}
             label="Dark Mode"
             onClick={toggleDarkMode}
             rightContent={
-              <span className="text-sm text-gray-500 dark:text-gray-400">
+              <span className="text-sm text-slate-500 dark:text-slate-400">
                 {isDarkMode ? 'On' : 'Off'}
               </span>
             }
@@ -186,16 +186,16 @@ export const Settings = () => {
 
           <SettingsListItem
             icon={Info}
-            iconColor="text-blue-600 dark:text-blue-400"
+            iconColor="text-primary-600 dark:text-primary-400"
             label="About PuppySteps"
             expandable
             expanded={expandedSection === 'about'}
             onClick={() => toggleSection('about')}
           >
-            <p className="text-gray-700 dark:text-gray-300">
+            <p className="text-slate-700 dark:text-slate-300">
               Version 1.0.0
             </p>
-            <p className="text-gray-500 dark:text-gray-400">
+            <p className="text-slate-500 dark:text-slate-400">
               Helping you raise well-socialized, happy puppies!
             </p>
           </SettingsListItem>
@@ -211,10 +211,10 @@ export const Settings = () => {
         <CardContent className="space-y-1">
           <SettingsListItem
             icon={Mail}
-            iconColor="text-purple-600 dark:text-purple-400"
+            iconColor="text-accent-600 dark:text-accent-400"
             label="Contact Support"
             onClick={() => window.location.href = 'mailto:support@puppysteps.app'}
-            rightContent={<ChevronRight className="h-5 w-5 text-gray-400" />}
+            rightContent={<ChevronRight className="h-5 w-5 text-slate-400" />}
           />
         </CardContent>
       </Card>
@@ -250,7 +250,7 @@ export const Settings = () => {
         title="Delete Dog"
       >
         <div className="space-y-4">
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-slate-600 dark:text-slate-400">
             Are you sure you want to delete this dog? This action cannot be undone and will also delete all associated socialisation sessions.
           </p>
           <div className="flex gap-3">
