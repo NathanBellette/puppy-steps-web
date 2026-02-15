@@ -36,7 +36,7 @@ const COLLECTIONS = {
  * Converts Firestore Timestamps to JS Dates in a document.
  * Also normalizes known fields (e.g., SessionType casing, photoURL -> photoUrl).
  */
-function convertTimestamps<T>(data: DocumentData): T {
+export function convertTimestamps<T>(data: DocumentData): T {
   const converted: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
     if (value instanceof Timestamp) {

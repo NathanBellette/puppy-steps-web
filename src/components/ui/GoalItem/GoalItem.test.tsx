@@ -4,11 +4,6 @@ import { GoalItem } from './GoalItem';
 import { Goal } from '@/types';
 import { TargetProgress } from '@/services/targetProgress';
 
-// Mock the utils functions
-vi.mock('@/lib/utils', () => ({
-  cn: (...classes: (string | undefined)[]) => classes.filter(Boolean).join(' '),
-}));
-
 describe('GoalItem', () => {
   const mockGoal: Goal = {
     id: 'goal-1',

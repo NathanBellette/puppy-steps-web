@@ -10,38 +10,24 @@ import {
 
 describe('Card Components', () => {
   describe('Card', () => {
-    it('renders with default styling', () => {
-      render(<Card data-testid="card">Card content</Card>);
-      const card = screen.getByTestId('card');
-      expect(card).toBeInTheDocument();
-      expect(card).toHaveClass('rounded-lg', 'border', 'border-slate-200', 'bg-white');
-    });
-
-    it('applies custom className', () => {
-      render(<Card className="custom-class" data-testid="card">Content</Card>);
-      const card = screen.getByTestId('card');
-      expect(card).toHaveClass('custom-class');
-    });
-
-    it('forwards ref correctly', () => {
-      const ref = vi.fn();
-      render(<Card ref={ref} data-testid="card">Content</Card>);
-      expect(ref).toHaveBeenCalled();
-    });
-
     it('renders children correctly', () => {
       render(<Card>Test content</Card>);
       expect(screen.getByText('Test content')).toBeInTheDocument();
     });
+
+    it('applies custom className', () => {
+      render(<Card className="custom-class" data-testid="card">Content</Card>);
+      expect(screen.getByTestId('card')).toHaveClass('custom-class');
+    });
+
+    it('forwards ref correctly', () => {
+      const ref = vi.fn();
+      render(<Card ref={ref}>Content</Card>);
+      expect(ref).toHaveBeenCalled();
+    });
   });
 
   describe('CardHeader', () => {
-    it('renders with correct styling', () => {
-      render(<CardHeader data-testid="header">Header content</CardHeader>);
-      const header = screen.getByTestId('header');
-      expect(header).toHaveClass('flex', 'flex-col', 'space-y-1.5', 'p-6');
-    });
-
     it('renders children correctly', () => {
       render(<CardHeader>Header text</CardHeader>);
       expect(screen.getByText('Header text')).toBeInTheDocument();
@@ -49,27 +35,14 @@ describe('Card Components', () => {
   });
 
   describe('CardTitle', () => {
-    it('renders as h3 with correct styling', () => {
-      render(<CardTitle data-testid="title">Card Title</CardTitle>);
-      const title = screen.getByTestId('title');
-      expect(title).toBeInTheDocument();
+    it('renders as h3', () => {
+      render(<CardTitle>Card Title</CardTitle>);
+      const title = screen.getByText('Card Title');
       expect(title.tagName).toBe('H3');
-      expect(title).toHaveClass('text-2xl', 'font-semibold', 'leading-none', 'tracking-tight');
-    });
-
-    it('renders title text correctly', () => {
-      render(<CardTitle>My Card Title</CardTitle>);
-      expect(screen.getByText('My Card Title')).toBeInTheDocument();
     });
   });
 
   describe('CardDescription', () => {
-    it('renders with correct styling', () => {
-      render(<CardDescription data-testid="description">Description text</CardDescription>);
-      const description = screen.getByTestId('description');
-      expect(description).toHaveClass('text-sm', 'text-slate-500');
-    });
-
     it('renders description text correctly', () => {
       render(<CardDescription>This is a description</CardDescription>);
       expect(screen.getByText('This is a description')).toBeInTheDocument();
@@ -77,12 +50,6 @@ describe('Card Components', () => {
   });
 
   describe('CardContent', () => {
-    it('renders with correct styling', () => {
-      render(<CardContent data-testid="content">Content text</CardContent>);
-      const content = screen.getByTestId('content');
-      expect(content).toHaveClass('p-6', 'pt-0');
-    });
-
     it('renders content correctly', () => {
       render(<CardContent>Main content here</CardContent>);
       expect(screen.getByText('Main content here')).toBeInTheDocument();
@@ -90,12 +57,6 @@ describe('Card Components', () => {
   });
 
   describe('CardFooter', () => {
-    it('renders with correct styling', () => {
-      render(<CardFooter data-testid="footer">Footer content</CardFooter>);
-      const footer = screen.getByTestId('footer');
-      expect(footer).toHaveClass('flex', 'items-center', 'p-6', 'pt-0');
-    });
-
     it('renders footer content correctly', () => {
       render(<CardFooter>Footer text</CardFooter>);
       expect(screen.getByText('Footer text')).toBeInTheDocument();

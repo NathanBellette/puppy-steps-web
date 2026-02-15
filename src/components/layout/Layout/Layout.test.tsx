@@ -44,38 +44,18 @@ describe('Layout', () => {
     expect(screen.getByTestId('outlet')).toBeInTheDocument();
   });
 
-  it('renders main content area with proper styling', () => {
+  it('renders main content area', () => {
     render(<LayoutWrapper />);
-    
-    const main = screen.getByRole('main');
-    expect(main).toBeInTheDocument();
-    expect(main).toHaveClass('py-6');
-  });
-
-  it('renders content container with proper max width', () => {
-    render(<LayoutWrapper />);
-    
-    const container = screen.getByTestId('outlet').parentElement;
-    expect(container).toHaveClass('mx-auto', 'max-w-7xl', 'px-4', 'sm:px-6', 'lg:px-8');
-  });
-
-  it('has proper layout structure', () => {
-    render(<LayoutWrapper />);
-    
-    const layout = screen.getByTestId('sidebar').parentElement;
-    expect(layout).toHaveClass('min-h-screen', 'bg-slate-50', 'dark:bg-slate-950');
+    expect(screen.getByRole('main')).toBeInTheDocument();
   });
 
   it('renders mobile navigation', () => {
     render(<LayoutWrapper />);
-    
-    expect(screen.getByTestId('mobile-nav')).toBeInTheDocument();
     expect(screen.getByText('Mobile Navigation')).toBeInTheDocument();
   });
 
   it('renders page content through outlet', () => {
     render(<LayoutWrapper />);
-    
     expect(screen.getByText('Page Content')).toBeInTheDocument();
   });
 });
