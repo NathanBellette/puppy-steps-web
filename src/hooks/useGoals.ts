@@ -3,11 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
 import { 
   getUserGoals, 
-  getUserGoalsByCategory,
   createGoal, 
   updateGoal, 
   deleteGoal,
-  getGoal,
   createGoalsBatch,
 } from '@/lib/firestore';
 import { Goal, GoalFormData, createInitialGoalsForDog } from '@/types';
@@ -102,26 +100,6 @@ export const useGoals = (dogId?: string) => {
     isInitializing: initializeGoalsMutation.isPending,
     isDeleting: deleteGoalMutation.isPending,
   };
-};
-
-export const useGoalsByCategory = (dogId?: string) => {
-  const { user } = useAuth();
-
-  return useQuery({
-    queryKey: ['goalsByCategory', user?.uid, dogId],
-    queryFn: () => getUserGoalsByCategory(user!.uid, dogId),
-    enabled: !!user,
-  });
-};
-
-export const useGoal = (goalId: string) => {
-  const { user } = useAuth();
-
-  return useQuery({
-    queryKey: ['goal', goalId],
-    queryFn: () => getGoal(goalId),
-    enabled: !!user && !!goalId,
-  });
 };
 
 /**

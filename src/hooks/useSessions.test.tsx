@@ -45,7 +45,6 @@ const mockGetUserSessions = vi.fn().mockResolvedValue(mockSessions);
 const mockCreateSession = vi.fn().mockResolvedValue('session-3');
 const mockUpdateSession = vi.fn().mockResolvedValue(undefined);
 const mockDeleteSession = vi.fn().mockResolvedValue(undefined);
-const mockGetSession = vi.fn();
 const mockUploadSessionPhoto = vi.fn().mockResolvedValue('https://example.com/session-photo.jpg');
 
 vi.mock('@/lib/firestore', () => ({
@@ -53,7 +52,6 @@ vi.mock('@/lib/firestore', () => ({
   createSession: (...args: unknown[]) => mockCreateSession(...args),
   updateSession: (...args: unknown[]) => mockUpdateSession(...args),
   deleteSession: (...args: unknown[]) => mockDeleteSession(...args),
-  getSession: (...args: unknown[]) => mockGetSession(...args),
 }));
 
 vi.mock('@/lib/storage', () => ({

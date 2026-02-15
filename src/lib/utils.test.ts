@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatDate, formatTime, formatDateTime, getAgeInMonths, capitalizeFirst, getReactionEmoji, getReactionLabel } from './utils';
+import { formatDate, formatTime, formatDateTime, capitalizeFirst, getReactionEmoji, getReactionLabel } from './utils';
 
 describe('formatDate', () => {
   it('formats a date in US locale', () => {
@@ -42,31 +42,6 @@ describe('formatDateTime', () => {
     expect(result).toContain('Jan 15, 2024');
     expect(result).toContain('at');
     expect(result).toMatch(/9:30\s*AM/);
-  });
-});
-
-describe('getAgeInMonths', () => {
-  it('returns 0 for a date today', () => {
-    const today = new Date();
-    const result = getAgeInMonths(today);
-    expect(result).toBe(0);
-  });
-
-  it('returns approximately 12 for a date one year ago', () => {
-    const oneYearAgo = new Date();
-    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-    const result = getAgeInMonths(oneYearAgo);
-    // Should be approximately 12, accounting for month length variance
-    expect(result).toBeGreaterThanOrEqual(11);
-    expect(result).toBeLessThanOrEqual(12);
-  });
-
-  it('returns approximately 6 for a date six months ago', () => {
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-    const result = getAgeInMonths(sixMonthsAgo);
-    expect(result).toBeGreaterThanOrEqual(5);
-    expect(result).toBeLessThanOrEqual(6);
   });
 });
 

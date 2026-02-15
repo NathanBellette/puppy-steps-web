@@ -28,5 +28,9 @@ RUN npm ci
 # Copied after npm ci so that source changes don't bust the dependency cache.
 COPY . .
 
+# In CI, a safe .env.ci is created and copied in via .dockerignore allowlist.
+# Rename it to .env so Vite picks it up during builds/tests.
+RUN if [ -f .env.ci ]; then cp .env.ci .env; fi
+
 # Playwright config reads CI to enable retries, single worker, and forbidOnly.
 ENV CI=true
