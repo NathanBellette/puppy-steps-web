@@ -42,18 +42,18 @@ test.describe('Auth page interactions', () => {
     await page.goto('/auth');
 
     // Initially shows Sign In
-    await expect(page.getByRole('heading', { name: /sign in/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Sign in to your account' })).toBeVisible();
 
     // Click "Don't have an account? Sign up"
     await page.getByText(/don't have an account/i).click();
 
     // Now shows Sign Up form with display name field
-    await expect(page.getByRole('heading', { name: /sign up/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible();
     await expect(page.getByLabel(/full name/i)).toBeVisible();
 
     // Toggle back
     await page.getByText(/already have an account/i).click();
-    await expect(page.getByRole('heading', { name: /sign in/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Sign in to your account' })).toBeVisible();
   });
 
   test('shows validation errors on empty sign-in submit', async ({ page }) => {
