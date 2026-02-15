@@ -1,0 +1,84 @@
+# =============================================================================
+# Docker-based CI: unit tests + Playwright e2e tests
+#
+# Builds a single test image (with browsers baked in), then runs both test
+# suites against it. Docker layer caching keeps rebuilds fast — only the
+# source-code layer is rebuilt when package*.json haven't changed.
+# =============================================================================
+
+name: Docker CI Tests
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: docker-test-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # Docker setup: BuildKit enables layer caching via the GitHub Actions
+      # cache backend, so subsequent runs reuse the npm ci layer.
+      # -----------------------------------------------------------------------
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build test image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true                    # Load into local docker daemon (don't push to a registry)
+          tags: puppy-steps-test:latest
+          cache-from: type=gha          # Pull cached layers from GitHub Actions cache
+          cache-to: type=gha,mode=max   # Push all layers to cache (not just final)
+
+      # -----------------------------------------------------------------------
+      # Unit tests (Vitest)
+      # -----------------------------------------------------------------------
+      - name: Run unit tests
+        run: docker run --rm puppy-steps-test:latest npm run test:run
+
+      # -----------------------------------------------------------------------
+      # E2E tests (Playwright)
+      # Mount volumes so test results are available on the host for artifact
+      # upload even if the container exits with a failure code.
+      # -----------------------------------------------------------------------
+      - name: Run Playwright tests
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p test-results playwright-report
+          docker run --rm \
+            -v ${{ github.workspace }}/test-results:/app/test-results \
+            -v ${{ github.workspace }}/playwright-report:/app/playwright-report \
+            puppy-steps-test:latest \
+            npx playwright test
+
+      # -----------------------------------------------------------------------
+      # Artifacts: upload the Playwright HTML report (always) and raw test
+      # results with traces/videos/screenshots (only on failure).
+      # -----------------------------------------------------------------------
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Upload test results (traces & screenshots)
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 7
