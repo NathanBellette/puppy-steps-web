@@ -4,14 +4,12 @@ import { Button } from '@/components/ui/Button';
 import { GoalItem } from '@/components/ui/GoalItem';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
-import { SkeletonList } from '@/components/ui/SkeletonList';
 import { LogSessionModal } from '@/components/LogSessionModal';
 import { useDogs } from '@/hooks/useDogProfile';
 import { useGoals } from '@/hooks/useGoals';
 import { useTargetProgress } from '@/hooks/useTargetProgress';
 import { SessionType, SESSION_TYPE_EMOJI } from '@/types';
 import { getCoachingTip } from '@/services/targetProgress';
-import { Spinner } from '@/components/ui/Spinner';
 import { Target, AlertCircle, Plus } from 'lucide-react';
 
 const typeLabels: Record<SessionType, string> = {
@@ -109,7 +107,7 @@ export const Goals = () => {
                 >
                   {isInitializing ? (
                     <>
-                      <Spinner className="mr-2" />
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                       Creating Targets...
                     </>
                   ) : (
@@ -174,7 +172,13 @@ export const Goals = () => {
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <SkeletonList count={5} height="h-24" />
+                <div className="space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="h-24 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+                    </div>
+                  ))}
+                </div>
               ) : filteredGoals.length > 0 ? (
                 <div className="space-y-3">
                   {filteredGoals.map((goal) => {

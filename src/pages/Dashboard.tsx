@@ -6,8 +6,6 @@ import { Button } from '@/components/ui/Button';
 import { DogAvatar } from '@/components/ui/DogAvatar';
 import { GoalItem } from '@/components/ui/GoalItem';
 import { SessionItem } from '@/components/ui/SessionItem';
-import { SkeletonList } from '@/components/ui/SkeletonList';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { AddDogModal } from '@/components/AddDogModal';
 import { LogSessionModal } from '@/components/LogSessionModal';
 import { useDogs } from '@/hooks/useDogProfile';
@@ -88,14 +86,18 @@ export const Dashboard = () => {
     return (
       <div className="flex items-center justify-center min-h-96">
         <Card className="w-full max-w-md">
-          <CardContent>
-            <EmptyState
-              icon={Target}
-              title="No Dog Selected"
-              description="Please add a dog profile to start tracking their socialization progress."
-              actionLabel="Add Dog Profile"
-              onAction={() => setShowAddDogModal(true)}
-            />
+          <CardContent className="text-center py-8">
+            <Target className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
+              No Dog Selected
+            </h3>
+            <p className="text-slate-500 dark:text-slate-400 mb-4">
+              Please add a dog profile to start tracking their socialization progress.
+            </p>
+            <Button onClick={() => setShowAddDogModal(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Dog Profile
+            </Button>
           </CardContent>
         </Card>
         <AddDogModal isOpen={showAddDogModal} onClose={() => setShowAddDogModal(false)} />
@@ -155,7 +157,13 @@ export const Dashboard = () => {
         </CardHeader>
         <CardContent>
           {progressLoading ? (
-            <SkeletonList count={3} height="h-24" />
+            <div className="space-y-3">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-24 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+                </div>
+              ))}
+            </div>
           ) : todaysPlan.length > 0 ? (
             <div className="space-y-3">
               {todaysPlan.map(({ goal, progress: tp }) => (
@@ -308,7 +316,13 @@ export const Dashboard = () => {
         </CardHeader>
         <CardContent>
           {sessionsLoading ? (
-            <SkeletonList count={3} />
+            <div className="space-y-3">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-20 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+                </div>
+              ))}
+            </div>
           ) : recentSessions.length > 0 ? (
             <div className="space-y-3">
               {recentSessions.map((session) => (

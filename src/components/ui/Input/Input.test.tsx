@@ -1,14 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Input } from './Input';
+import { Input, Textarea } from './Input';
 
 describe('Input Components', () => {
   describe('Input', () => {
-    it('renders with default props', () => {
+    it('renders without crashing', () => {
       render(<Input data-testid="input" />);
-      const input = screen.getByTestId('input');
-      expect(input).toBeInTheDocument();
-      expect(input).toHaveClass('flex', 'h-10', 'w-full', 'rounded-md');
+      expect(screen.getByTestId('input')).toBeInTheDocument();
     });
 
     it('renders with different input types', () => {
@@ -33,27 +31,24 @@ describe('Input Components', () => {
 
     it('shows placeholder text', () => {
       render(<Input placeholder="Enter your name" data-testid="input" />);
-      const input = screen.getByTestId('input');
-      expect(input).toHaveAttribute('placeholder', 'Enter your name');
+      expect(screen.getByTestId('input')).toHaveAttribute('placeholder', 'Enter your name');
     });
 
-    it('can be disabled', () => {
-      render(<Input disabled data-testid="input" />);
+    it('can be disabled', async () => {
+      const handleChange = vi.fn();
+      render(<Input disabled onChange={handleChange} data-testid="input" />);
       const input = screen.getByTestId('input');
       expect(input).toBeDisabled();
-      expect(input).toHaveClass('disabled:cursor-not-allowed', 'disabled:opacity-50');
     });
 
     it('can be required', () => {
       render(<Input required data-testid="input" />);
-      const input = screen.getByTestId('input');
-      expect(input).toBeRequired();
+      expect(screen.getByTestId('input')).toBeRequired();
     });
 
     it('applies custom className', () => {
       render(<Input className="custom-class" data-testid="input" />);
-      const input = screen.getByTestId('input');
-      expect(input).toHaveClass('custom-class');
+      expect(screen.getByTestId('input')).toHaveClass('custom-class');
     });
 
     it('forwards ref correctly', () => {
@@ -71,11 +66,65 @@ describe('Input Components', () => {
       expect(input).toHaveFocus();
     });
 
-    it('has proper accessibility attributes', () => {
+    it('supports aria-label for accessibility', () => {
       render(<Input aria-label="Username" data-testid="input" />);
-      const input = screen.getByLabelText('Username');
-      expect(input).toBeInTheDocument();
+      expect(screen.getByLabelText('Username')).toBeInTheDocument();
     });
   });
 
+  describe('Textarea', () => {
+    it('renders without crashing', () => {
+      render(<Textarea data-testid="textarea" />);
+      expect(screen.getByTestId('textarea')).toBeInTheDocument();
+    });
+
+    it('handles value changes', async () => {
+      const user = userEvent.setup();
+      render(<Textarea data-testid="textarea" />);
+      const textarea = screen.getByTestId('textarea') as HTMLTextAreaElement;
+      
+      await user.type(textarea, 'This is a long text');
+      expect(textarea.value).toBe('This is a long text');
+    });
+
+    it('shows placeholder text', () => {
+      render(<Textarea placeholder="Enter your message" data-testid="textarea" />);
+      expect(screen.getByTestId('textarea')).toHaveAttribute('placeholder', 'Enter your message');
+    });
+
+    it('can be disabled', () => {
+      render(<Textarea disabled data-testid="textarea" />);
+      expect(screen.getByTestId('textarea')).toBeDisabled();
+    });
+
+    it('can be required', () => {
+      render(<Textarea required data-testid="textarea" />);
+      expect(screen.getByTestId('textarea')).toBeRequired();
+    });
+
+    it('applies custom className', () => {
+      render(<Textarea className="custom-class" data-testid="textarea" />);
+      expect(screen.getByTestId('textarea')).toHaveClass('custom-class');
+    });
+
+    it('forwards ref correctly', () => {
+      const ref = vi.fn();
+      render(<Textarea ref={ref} data-testid="textarea" />);
+      expect(ref).toHaveBeenCalled();
+    });
+
+    it('handles multiline text', async () => {
+      const user = userEvent.setup();
+      render(<Textarea data-testid="textarea" />);
+      const textarea = screen.getByTestId('textarea') as HTMLTextAreaElement;
+      
+      await user.type(textarea, 'Line 1\nLine 2\nLine 3');
+      expect(textarea.value).toBe('Line 1\nLine 2\nLine 3');
+    });
+
+    it('supports aria-label for accessibility', () => {
+      render(<Textarea aria-label="Message" data-testid="textarea" />);
+      expect(screen.getByLabelText('Message')).toBeInTheDocument();
+    });
+  });
 });

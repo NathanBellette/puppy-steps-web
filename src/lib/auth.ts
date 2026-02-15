@@ -6,7 +6,7 @@ import {
   updateProfile,
   User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
 // Re-export auth for use in other files
@@ -52,6 +52,19 @@ export const signOut = async (): Promise<void> => {
 
 export const resetPassword = async (email: string): Promise<void> => {
   await sendPasswordResetEmail(auth, email);
+};
+
+export const getUserData = async (uid: string): Promise<User | null> => {
+  const userDoc = await getDoc(doc(db, 'users', uid));
+  if (userDoc.exists()) {
+    return { id: uid, ...userDoc.data() } as User;
+  }
+  return null;
+};
+
+export const updateUserData = async (uid: string, data: Partial<User>): Promise<void> => {
+  const userRef = doc(db, 'users', uid);
+  await setDoc(userRef, { ...data, updatedAt: new Date() }, { merge: true });
 };
 
 // Convert Firebase user to our AuthUser type

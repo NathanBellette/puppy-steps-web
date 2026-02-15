@@ -9,4 +9,8 @@ export interface Dog {
   updatedAt: Date;
 }
 
+export interface DogProfile extends Dog {
+  // Additional profile-specific fields can be added here
+}
+
 export type DogFormData = Omit<Dog, 'id' | 'userId' | 'createdAt' | 'updatedAt'>;

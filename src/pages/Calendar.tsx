@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { SessionItem } from '@/components/ui/SessionItem';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { useDogs } from '@/hooks/useDogProfile';
 import { useSessions } from '@/hooks/useSessions';
 import { Session, SessionType, SESSION_TYPE_EMOJI } from '@/types';
@@ -120,12 +119,14 @@ export const Calendar = () => {
     return (
       <div className="flex items-center justify-center min-h-96">
         <Card className="w-full max-w-md">
-          <CardContent>
-            <EmptyState
-              icon={Target}
-              title="No Dog Selected"
-              description="Please select a dog to view their session calendar."
-            />
+          <CardContent className="text-center py-8">
+            <Target className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
+              No Dog Selected
+            </h3>
+            <p className="text-slate-500 dark:text-slate-400">
+              Please select a dog to view their session calendar.
+            </p>
           </CardContent>
         </Card>
       </div>

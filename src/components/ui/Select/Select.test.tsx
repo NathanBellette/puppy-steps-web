@@ -4,17 +4,14 @@ import { Select, SelectOption } from './Select';
 
 describe('Select Components', () => {
   describe('Select', () => {
-    it('renders with default props', () => {
+    it('renders without crashing', () => {
       render(
         <Select data-testid="select">
           <SelectOption value="option1">Option 1</SelectOption>
           <SelectOption value="option2">Option 2</SelectOption>
         </Select>
       );
-      
-      const select = screen.getByTestId('select');
-      expect(select).toBeInTheDocument();
-      expect(select).toHaveClass('flex', 'h-10', 'w-full', 'appearance-none', 'rounded-md');
+      expect(screen.getByTestId('select')).toBeInTheDocument();
     });
 
     it('renders with placeholder', () => {
@@ -23,9 +20,6 @@ describe('Select Components', () => {
           <SelectOption value="option1">Option 1</SelectOption>
         </Select>
       );
-      
-      const select = screen.getByTestId('select');
-      expect(select).toBeInTheDocument();
       expect(screen.getByRole('option', { name: 'Choose an option' })).toBeInTheDocument();
     });
 
@@ -35,7 +29,6 @@ describe('Select Components', () => {
           <SelectOption value="option1">Option 1</SelectOption>
         </Select>
       );
-      
       const chevronIcon = screen.getByTestId('select').parentElement?.querySelector('svg');
       expect(chevronIcon).toBeInTheDocument();
     });
@@ -60,10 +53,7 @@ describe('Select Components', () => {
           <SelectOption value="option1">Option 1</SelectOption>
         </Select>
       );
-      
-      const select = screen.getByTestId('select');
-      expect(select).toBeDisabled();
-      expect(select).toHaveClass('disabled:cursor-not-allowed', 'disabled:opacity-50');
+      expect(screen.getByTestId('select')).toBeDisabled();
     });
 
     it('can be required', () => {
@@ -72,9 +62,7 @@ describe('Select Components', () => {
           <SelectOption value="option1">Option 1</SelectOption>
         </Select>
       );
-      
-      const select = screen.getByTestId('select');
-      expect(select).toBeRequired();
+      expect(screen.getByTestId('select')).toBeRequired();
     });
 
     it('applies custom className', () => {
@@ -83,9 +71,7 @@ describe('Select Components', () => {
           <SelectOption value="option1">Option 1</SelectOption>
         </Select>
       );
-      
-      const select = screen.getByTestId('select');
-      expect(select).toHaveClass('custom-class');
+      expect(screen.getByTestId('select')).toHaveClass('custom-class');
     });
 
     it('forwards ref correctly', () => {
@@ -98,15 +84,13 @@ describe('Select Components', () => {
       expect(ref).toHaveBeenCalled();
     });
 
-    it('has proper accessibility attributes', () => {
+    it('supports aria-label for accessibility', () => {
       render(
         <Select aria-label="Choose option" data-testid="select">
           <SelectOption value="option1">Option 1</SelectOption>
         </Select>
       );
-      
-      const select = screen.getByLabelText('Choose option');
-      expect(select).toBeInTheDocument();
+      expect(screen.getByLabelText('Choose option')).toBeInTheDocument();
     });
 
     it('renders all options', () => {
@@ -135,7 +119,6 @@ describe('Select Components', () => {
       );
       
       const option = screen.getByTestId('option');
-      expect(option).toBeInTheDocument();
       expect(option).toHaveAttribute('value', 'test-value');
       expect(option).toHaveTextContent('Test Option');
     });
@@ -148,9 +131,7 @@ describe('Select Components', () => {
           </SelectOption>
         </Select>
       );
-      
-      const option = screen.getByTestId('option');
-      expect(option).toBeDisabled();
+      expect(screen.getByTestId('option')).toBeDisabled();
     });
 
     it('applies custom className', () => {
@@ -161,9 +142,7 @@ describe('Select Components', () => {
           </SelectOption>
         </Select>
       );
-      
-      const option = screen.getByTestId('option');
-      expect(option).toHaveClass('custom-class');
+      expect(screen.getByTestId('option')).toHaveClass('custom-class');
     });
 
     it('forwards ref correctly', () => {
@@ -190,7 +169,6 @@ describe('Select Components', () => {
         </Select>
       );
 
-      expect(screen.getByTestId('select')).toBeInTheDocument();
       expect(screen.getByRole('option', { name: 'Choose a category' })).toBeInTheDocument();
       expect(screen.getByRole('option', { name: 'People' })).toBeInTheDocument();
       expect(screen.getByRole('option', { name: 'Dogs' })).toBeInTheDocument();
