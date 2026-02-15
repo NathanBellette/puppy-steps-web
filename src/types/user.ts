@@ -1,5 +1,3 @@
-import { Dog } from './dog';
-
 export interface User {
   id: string;
   email: string;
@@ -11,10 +9,6 @@ export interface User {
     theme: 'light' | 'dark' | 'system';
     notifications: boolean;
   };
-}
-
-export interface UserProfile extends User {
-  dogs: Dog[];
 }
 
 export interface AuthUser {

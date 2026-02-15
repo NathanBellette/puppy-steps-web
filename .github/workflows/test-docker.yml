@@ -26,9 +26,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create .env file for Docker build
+      - name: Create .env.ci for Docker build
         run: |
-          cat > .env << EOF
+          cat > .env.ci << EOF
           VITE_FIREBASE_API_KEY=demo-api-key-for-ci
           VITE_FIREBASE_AUTH_DOMAIN=puppy-steps-demo.firebaseapp.com
           VITE_FIREBASE_PROJECT_ID=puppy-steps-demo

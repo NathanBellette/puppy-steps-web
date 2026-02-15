@@ -38,7 +38,6 @@ const mockGetUserDogs = vi.fn().mockResolvedValue(mockDogs);
 const mockCreateDog = vi.fn().mockResolvedValue('dog-3');
 const mockUpdateDog = vi.fn().mockResolvedValue(undefined);
 const mockDeleteDog = vi.fn().mockResolvedValue(undefined);
-const mockGetDog = vi.fn();
 const mockCreateGoalsBatch = vi.fn().mockResolvedValue(undefined);
 const mockUploadDogPhoto = vi.fn().mockResolvedValue('https://example.com/photo.jpg');
 
@@ -47,7 +46,6 @@ vi.mock('@/lib/firestore', () => ({
   createDog: (...args: unknown[]) => mockCreateDog(...args),
   updateDog: (...args: unknown[]) => mockUpdateDog(...args),
   deleteDog: (...args: unknown[]) => mockDeleteDog(...args),
-  getDog: (...args: unknown[]) => mockGetDog(...args),
   createGoalsBatch: (...args: unknown[]) => mockCreateGoalsBatch(...args),
 }));
 

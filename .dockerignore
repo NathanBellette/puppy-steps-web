@@ -19,10 +19,9 @@ build
 Thumbs.db
 
 # Environment files (may contain secrets)
-# Note: .env is created in CI with safe demo values
-# .env
-.env.local
-.env.*.local
+.env
+.env.*
+!.env.ci
 !env.example
 
 # Firebase local files

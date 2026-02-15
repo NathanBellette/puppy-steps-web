@@ -6,7 +6,6 @@ import {
   createSession, 
   updateSession, 
   deleteSession,
-  getSession 
 } from '@/lib/firestore';
 import { uploadSessionPhoto } from '@/lib/storage';
 import { SessionFormData, SessionFilters } from '@/types';
@@ -90,26 +89,6 @@ export const useSessions = (dogId?: string, filters?: SessionFilters) => {
     isUpdating: updateSessionMutation.isPending,
     isDeleting: deleteSessionMutation.isPending,
   };
-};
-
-export const useSession = (sessionId: string) => {
-  const { user } = useAuth();
-
-  return useQuery({
-    queryKey: ['session', sessionId],
-    queryFn: () => getSession(sessionId),
-    enabled: !!user && !!sessionId,
-  });
-};
-
-export const useSessionsByDate = (dogId?: string, startDate?: Date, endDate?: Date) => {
-  const filters: SessionFilters = {
-    dogId,
-    dateFrom: startDate,
-    dateTo: endDate,
-  };
-
-  return useSessions(dogId, filters);
 };
 
 /**

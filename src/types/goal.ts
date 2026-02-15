@@ -33,12 +33,6 @@ export interface GoalProgress {
   percentage: number;
 }
 
-export interface GoalCategoryProgress {
-  category: SessionType;
-  goals: Goal[];
-  progress: GoalProgress;
-}
-
 export interface GoalStats {
   totalGoals: number;
   completedGoals: number;

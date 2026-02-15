@@ -45,20 +45,16 @@ const mockGoals: Goal[] = [
 ];
 
 const mockGetUserGoals = vi.fn().mockResolvedValue(mockGoals);
-const mockGetUserGoalsByCategory = vi.fn().mockResolvedValue(mockGoals);
 const mockCreateGoal = vi.fn().mockResolvedValue('goal-3');
 const mockUpdateGoal = vi.fn().mockResolvedValue(undefined);
 const mockDeleteGoal = vi.fn().mockResolvedValue(undefined);
-const mockGetGoal = vi.fn();
 const mockCreateGoalsBatch = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('@/lib/firestore', () => ({
   getUserGoals: (...args: unknown[]) => mockGetUserGoals(...args),
-  getUserGoalsByCategory: (...args: unknown[]) => mockGetUserGoalsByCategory(...args),
   createGoal: (...args: unknown[]) => mockCreateGoal(...args),
   updateGoal: (...args: unknown[]) => mockUpdateGoal(...args),
   deleteGoal: (...args: unknown[]) => mockDeleteGoal(...args),
-  getGoal: (...args: unknown[]) => mockGetGoal(...args),
   createGoalsBatch: (...args: unknown[]) => mockCreateGoalsBatch(...args),
 }));
 

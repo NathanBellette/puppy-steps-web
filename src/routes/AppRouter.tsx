@@ -5,6 +5,7 @@ import { AuthPage } from '@/pages/AuthPage';
 
 // Lazy load pages for better performance
 import { lazy, Suspense } from 'react';
+import { PageLoader } from '@/components/ui/PageLoader';
 
 const Dashboard = lazy(() => import('@/pages/Dashboard').then(m => ({ default: m.Dashboard })));
 const Goals = lazy(() => import('@/pages/Goals').then(m => ({ default: m.Goals })));
@@ -12,13 +13,6 @@ const Sessions = lazy(() => import('@/pages/Sessions').then(m => ({ default: m.S
 const Calendar = lazy(() => import('@/pages/Calendar').then(m => ({ default: m.Calendar })));
 const Resources = lazy(() => import('@/pages/Resources').then(m => ({ default: m.Resources })));
 const Settings = lazy(() => import('@/pages/Settings').then(m => ({ default: m.Settings })));
-
-// Loading component
-const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-500"></div>
-  </div>
-);
 
 export const router = createBrowserRouter([
   {
