@@ -44,10 +44,7 @@ vi.mock('@/components/AddDogModal', () => ({
     isOpen ? <div data-testid="add-dog-modal">Add Dog Modal</div> : null,
 }));
 
-vi.mock('@/components/LogSessionModal', () => ({
-  LogSessionModal: ({ isOpen }: { isOpen: boolean }) =>
-    isOpen ? <div data-testid="log-session-modal">Log Session Modal</div> : null,
-}));
+// LogSessionModal was replaced with navigation to /log-exposure
 
 // --- Helpers ---
 
@@ -184,7 +181,7 @@ describe('Dashboard', () => {
     expect(buttons.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('opens the Log Session modal when Log Exposure is clicked', async () => {
+  it('navigates to /log-exposure when Log Exposure is clicked', async () => {
     const user = userEvent.setup();
     setupDefaultMocks();
     renderDashboard();
@@ -193,7 +190,7 @@ describe('Dashboard', () => {
     const logButtons = screen.getAllByRole('button', { name: /log exposure/i });
     await user.click(logButtons[0]);
 
-    expect(screen.getByTestId('log-session-modal')).toBeInTheDocument();
+    expect(mockNavigate).toHaveBeenCalledWith('/log-exposure', expect.any(Object));
   });
 
   it("renders Today's Plan with incomplete goals", () => {

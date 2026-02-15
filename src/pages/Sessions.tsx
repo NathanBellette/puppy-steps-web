@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -6,7 +7,6 @@ import { SessionItem } from '@/components/ui/SessionItem';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { SkeletonList } from '@/components/ui/SkeletonList';
-import { LogSessionModal } from '@/components/LogSessionModal';
 import { useDogs } from '@/hooks/useDogProfile';
 import { useSessions } from '@/hooks/useSessions';
 import { useToast } from '@/context/ToastContext';
@@ -22,10 +22,10 @@ const TYPE_FILTERS = [
 ];
 
 export const Sessions = () => {
+  const navigate = useNavigate();
   const { selectedDog } = useDogs();
   const { sessions, isLoading, deleteSession, isDeleting } = useSessions(selectedDog?.id);
   const { showToast } = useToast();
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [typeFilter, setTypeFilter] = useState<SessionType | 'all'>('all');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
@@ -72,7 +72,7 @@ export const Sessions = () => {
             Log and track {selectedDog.name}'s socialisation sessions
           </p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>
+        <Button onClick={() => navigate('/log-exposure')}>
           <Plus className="h-4 w-4 mr-2" />
           Log Session
         </Button>
@@ -121,7 +121,7 @@ export const Sessions = () => {
                   : `Try logging a ${typeFilter} session or change the filter.`}
               </p>
               {typeFilter === 'all' && (
-                <Button onClick={() => setIsModalOpen(true)}>
+                <Button onClick={() => navigate('/log-exposure')}>
                   <Plus className="h-4 w-4 mr-2" />
                   Log Your First Session
                 </Button>
@@ -130,14 +130,6 @@ export const Sessions = () => {
           )}
         </CardContent>
       </Card>
-
-      {/* Log Session Modal */}
-      <LogSessionModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        dogId={selectedDog.id}
-        dogName={selectedDog.name}
-      />
 
       {/* Delete Confirmation Modal */}
       <Modal

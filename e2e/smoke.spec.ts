@@ -81,7 +81,7 @@ test.describe('Auth page interactions', () => {
 });
 
 test.describe('Protected route gating', () => {
-  const protectedRoutes = ['/goals', '/sessions', '/calendar', '/resources', '/settings'];
+  const protectedRoutes = ['/goals', '/sessions', '/log-exposure', '/calendar', '/resources', '/settings'];
 
   for (const route of protectedRoutes) {
     test(`redirects unauthenticated user from ${route} to /auth`, async ({ page }) => {
