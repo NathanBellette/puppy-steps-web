@@ -22,10 +22,11 @@ vi.mock('@/context/ToastContext', () => ({
   useToast: () => ({ showToast: mockShowToast }),
 }));
 
-vi.mock('@/components/LogSessionModal', () => ({
-  LogSessionModal: ({ isOpen }: { isOpen: boolean }) =>
-    isOpen ? <div data-testid="log-session-modal">Log Session Modal</div> : null,
-}));
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return { ...actual, useNavigate: () => mockNavigate };
+});
 
 // --- Helpers ---
 
@@ -111,14 +112,14 @@ describe('Sessions', () => {
     expect(screen.getByRole('button', { name: /log session/i })).toBeInTheDocument();
   });
 
-  it('opens the Log Session modal when button is clicked', async () => {
+  it('navigates to /log-exposure when Log Session button is clicked', async () => {
     const user = userEvent.setup();
     setupDefaultMocks();
     renderSessions();
 
     await user.click(screen.getByRole('button', { name: /log session/i }));
 
-    expect(screen.getByTestId('log-session-modal')).toBeInTheDocument();
+    expect(mockNavigate).toHaveBeenCalledWith('/log-exposure');
   });
 
   it('renders type filter pills including All', () => {
