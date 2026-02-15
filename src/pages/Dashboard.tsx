@@ -9,7 +9,6 @@ import { SessionItem } from '@/components/ui/SessionItem';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonList } from '@/components/ui/SkeletonList';
 import { AddDogModal } from '@/components/AddDogModal';
-import { LogSessionModal } from '@/components/LogSessionModal';
 import { useDogs } from '@/hooks/useDogProfile';
 import { useGoals } from '@/hooks/useGoals';
 import { useTargetProgress } from '@/hooks/useTargetProgress';
@@ -22,9 +21,6 @@ export const Dashboard = () => {
   const navigate = useNavigate();
   const { selectedDog } = useDogs();
   const [showAddDogModal, setShowAddDogModal] = useState(false);
-  const [showLogSessionModal, setShowLogSessionModal] = useState(false);
-  const [prefillType, setPrefillType] = useState<SessionType | undefined>();
-  const [prefillCategory, setPrefillCategory] = useState<string | undefined>();
 
   const { goals } = useGoals(selectedDog?.id);
   const {
@@ -79,9 +75,12 @@ export const Dashboard = () => {
   }, [sessions]);
 
   const handleLogExposure = (type?: SessionType, category?: string) => {
-    setPrefillType(type);
-    setPrefillCategory(category);
-    setShowLogSessionModal(true);
+    navigate('/log-exposure', {
+      state: {
+        prefillType: type,
+        prefillCategory: category,
+      },
+    });
   };
 
   if (!selectedDog) {
@@ -105,16 +104,6 @@ export const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Log Session Modal */}
-      <LogSessionModal
-        isOpen={showLogSessionModal}
-        onClose={() => setShowLogSessionModal(false)}
-        dogId={selectedDog.id}
-        dogName={selectedDog.name}
-        prefillType={prefillType}
-        prefillCategory={prefillCategory}
-      />
-
       {/* Welcome Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { GoalItem } from '@/components/ui/GoalItem';
@@ -6,7 +7,6 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Spinner } from '@/components/ui/Spinner';
 import { SkeletonList } from '@/components/ui/SkeletonList';
-import { LogSessionModal } from '@/components/LogSessionModal';
 import { useDogs } from '@/hooks/useDogProfile';
 import { useGoals } from '@/hooks/useGoals';
 import { useTargetProgress } from '@/hooks/useTargetProgress';
@@ -28,15 +28,11 @@ const segmentItems = (['people', 'dogs', 'environments', 'noises'] as SessionTyp
 }));
 
 export const Goals = () => {
+  const navigate = useNavigate();
   const { selectedDog } = useDogs();
   const [selectedType, setSelectedType] = useState<SessionType>('people');
   const { goals, isLoading, initializeGoals, isInitializing } = useGoals(selectedDog?.id);
   const { progress, categoryProgress } = useTargetProgress(selectedDog?.id);
-
-  // Log Exposure modal state
-  const [logModalOpen, setLogModalOpen] = useState(false);
-  const [prefillType, setPrefillType] = useState<SessionType | undefined>();
-  const [prefillCategory, setPrefillCategory] = useState<string | undefined>();
 
   const filteredGoals = goals.filter(goal => goal.type === selectedType);
   const catProgress = categoryProgress[selectedType];
@@ -45,9 +41,12 @@ export const Goals = () => {
   const progressPercentage = catProgress?.percentage ?? 0;
 
   const handleLogExposure = (type: SessionType, category: string) => {
-    setPrefillType(type);
-    setPrefillCategory(category);
-    setLogModalOpen(true);
+    navigate('/log-exposure', {
+      state: {
+        prefillType: type,
+        prefillCategory: category,
+      },
+    });
   };
 
   const handleInitializeGoals = async () => {
@@ -200,18 +199,6 @@ export const Goals = () => {
             </CardContent>
           </Card>
         </>
-      )}
-
-      {/* Log Exposure Modal */}
-      {selectedDog && (
-        <LogSessionModal
-          isOpen={logModalOpen}
-          onClose={() => setLogModalOpen(false)}
-          dogId={selectedDog.id}
-          dogName={selectedDog.name}
-          prefillType={prefillType}
-          prefillCategory={prefillCategory}
-        />
       )}
     </div>
   );
