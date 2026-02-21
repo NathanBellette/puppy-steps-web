@@ -7,7 +7,6 @@ export interface User {
   updatedAt: Date;
   preferences: {
     theme: 'light' | 'dark' | 'system';
-    notifications: boolean;
   };
 }
 

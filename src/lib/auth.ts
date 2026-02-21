@@ -39,7 +39,6 @@ export const signUp = async (
     updatedAt: new Date(),
     preferences: {
       theme: 'system',
-      notifications: true,
     },
   };
 
