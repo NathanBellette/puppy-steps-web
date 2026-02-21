@@ -69,6 +69,6 @@ describe('Sidebar', () => {
 
     await user.click(screen.getByRole('button', { name: /sign out/i }));
 
-    expect(mockSignOut).toHaveBeenCalledOnce();
+    expect(mockSignOut).toHaveBeenCalledTimes(1);
   });
 });
