@@ -117,8 +117,8 @@ describeAuth('Log Exposure Flow', () => {
     await page.getByRole('button', { name: /log exposure/i }).click();
     await expect(page).toHaveURL(/\/log-exposure/);
     
-    // Click cancel
-    await page.getByRole('button', { name: /cancel/i }).first().click();
+    // Click cancel (back arrow in header)
+    await page.getByRole('button', { name: /cancel/i }).click();
     
     // Should go back to dashboard
     await expect(page).toHaveURL(/\/dashboard/);
@@ -294,15 +294,12 @@ describeAuth('Log Exposure Mobile', () => {
     await expect(page.getByRole('button', { name: /save/i })).toBeVisible();
   });
 
-  test('should show duplicate save buttons on mobile', async ({ page }) => {
+  test('should show save button in sticky header on mobile', async ({ page }) => {
     await page.goto('http://localhost:5173/log-exposure');
-    
-    // Should have save buttons (one in header, one at bottom)
-    const saveButtons = page.getByRole('button', { name: /save/i });
-    const count = await saveButtons.count();
-    
-    // At least one save button should be visible
-    expect(count).toBeGreaterThanOrEqual(1);
+
+    // Save button in sticky header should be visible
+    const saveButton = page.getByRole('button', { name: /save/i });
+    await expect(saveButton).toBeVisible();
   });
 
   test('should allow scrolling through entire form on mobile', async ({ page }) => {

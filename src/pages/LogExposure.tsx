@@ -378,32 +378,6 @@ export const LogExposure = () => {
             )}
           </div>
 
-          {/* Mobile Bottom Actions (Duplicate for convenience) */}
-          <div className="flex gap-3 pt-4 pb-8 sm:hidden">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isCreating}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isCreating || !selectedCategory}
-              className="flex-1"
-            >
-              {isCreating ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Saving...
-                </>
-              ) : (
-                'Save Exposure'
-              )}
-            </Button>
-          </div>
         </form>
       </div>
     </div>
