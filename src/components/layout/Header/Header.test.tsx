@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import { Header } from './Header';
 
 // Mock the hooks and context
@@ -51,15 +52,30 @@ vi.mock('@/components/ui/Select', () => ({
   ),
 }));
 
+const renderHeader = () =>
+  render(
+    <MemoryRouter>
+      <Header />
+    </MemoryRouter>
+  );
+
 describe('Header', () => {
   it('renders header with banner role', () => {
-    render(<Header />);
+    renderHeader();
     expect(screen.getByRole('banner')).toBeInTheDocument();
   });
 
+  it('renders app icon that links to home page', () => {
+    renderHeader();
+
+    const homeLink = screen.getByRole('link', { name: /go to home page/i });
+    expect(homeLink).toBeInTheDocument();
+    expect(homeLink).toHaveAttribute('href', '/dashboard');
+  });
+
   it('renders dog avatar when selected dog exists', () => {
-    render(<Header />);
-    
+    renderHeader();
+
     const dogAvatar = screen.getByTestId('dog-avatar');
     expect(dogAvatar).toBeInTheDocument();
     expect(dogAvatar).toHaveAttribute('data-name', 'Buddy');
@@ -68,11 +84,11 @@ describe('Header', () => {
   });
 
   it('renders dog selector with options', () => {
-    render(<Header />);
-    
+    renderHeader();
+
     const select = screen.getByTestId('dog-select');
     expect(select).toHaveValue('dog-1');
-    
+
     expect(screen.getByRole('option', { name: 'Select a dog' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Buddy' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Max' })).toBeInTheDocument();
@@ -80,30 +96,30 @@ describe('Header', () => {
 
   it('handles dog selection change', async () => {
     const user = userEvent.setup();
-    render(<Header />);
-    
+    renderHeader();
+
     const select = screen.getByTestId('dog-select');
     await user.selectOptions(select, 'dog-2');
-    
+
     expect(mockSetSelectedDog).toHaveBeenCalledWith(mockDogs[1]);
   });
 
   it('renders user information', () => {
-    render(<Header />);
-    
+    renderHeader();
+
     expect(screen.getByText('John Doe')).toBeInTheDocument();
     expect(screen.getByText('john@example.com')).toBeInTheDocument();
   });
 
   it('renders user avatar with photo', () => {
-    render(<Header />);
-    
+    renderHeader();
+
     const userAvatar = screen.getByAltText('User avatar');
     expect(userAvatar).toHaveAttribute('src', 'https://example.com/photo.jpg');
   });
 
   it('does not render hamburger menu button', () => {
-    render(<Header />);
+    renderHeader();
     expect(screen.queryByRole('button', { name: /open menu/i })).not.toBeInTheDocument();
   });
 });

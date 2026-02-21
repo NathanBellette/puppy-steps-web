@@ -1,4 +1,5 @@
 import { User } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useDogs } from '@/hooks/useDogProfile';
 import { DogAvatar } from '@/components/ui/DogAvatar';
@@ -21,11 +22,16 @@ export const Header = () => {
         {/* Left side — App name (mobile only) + Dog selector */}
         <div className="flex items-center">
           {/* Mobile app name */}
-          <div className="lg:hidden flex items-center mr-4">
+          <Link
+            to="/dashboard"
+            className="lg:hidden flex items-center mr-4"
+            aria-label="Go to home page"
+            tabIndex={0}
+          >
             <div className="h-8 w-8 rounded-lg bg-primary-500 flex items-center justify-center">
               <span className="text-white font-bold text-sm">P</span>
             </div>
-          </div>
+          </Link>
 
           {/* Dog selector */}
           <div className="flex items-center space-x-3">

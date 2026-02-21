@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { 
   LayoutDashboard, 
@@ -32,7 +32,12 @@ export const Sidebar = () => {
       <div className="flex h-full w-full flex-col bg-white dark:bg-slate-900 shadow-lg border-r border-slate-200 dark:border-slate-700">
         {/* Header */}
         <div className="flex h-16 items-center px-6 border-b border-slate-200 dark:border-slate-700">
-          <div className="flex items-center">
+          <Link
+            to="/dashboard"
+            className="flex items-center"
+            aria-label="Go to home page"
+            tabIndex={0}
+          >
             <div className="flex-shrink-0">
               <div className="h-8 w-8 rounded-lg bg-primary-500 flex items-center justify-center">
                 <span className="text-white font-bold text-sm">P</span>
@@ -43,7 +48,7 @@ export const Sidebar = () => {
                 PuppySteps
               </h1>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Navigation */}
