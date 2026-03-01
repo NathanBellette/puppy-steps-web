@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -18,8 +18,8 @@ import {
   INTENSITY_LEVELS,
   INTENSITY_LABELS,
 } from '@/types';
-import { cn } from '@/lib/utils';
-import { X, ArrowLeft } from 'lucide-react';
+import { cn, formatDateLong } from '@/lib/utils';
+import { X, ArrowLeft, Calendar } from 'lucide-react';
 
 const reactionLevels: ReactionLevel[] = ['😰', '😟', '😐', '😊', '😍'];
 
@@ -47,6 +47,7 @@ export const LogExposure = () => {
   const [notes, setNotes] = useState<string>('');
   const [photo, setPhoto] = useState<File | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
   // Redirect if no dog selected
   useEffect(() => {
@@ -180,15 +181,36 @@ export const LogExposure = () => {
             <label htmlFor="date" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Date
             </label>
-            <Input
+            <input
+              ref={dateInputRef}
               type="date"
               id="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
               required
               max={new Date().toISOString().split('T')[0]}
-              className="w-full"
+              className="sr-only"
+              aria-label="Select date"
+              tabIndex={-1}
             />
+            <button
+              type="button"
+              onClick={() => dateInputRef.current?.showPicker()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  dateInputRef.current?.showPicker();
+                }
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-left text-slate-900 dark:text-slate-100 hover:border-slate-400 dark:hover:border-slate-600 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+              aria-label={`Selected date: ${formatDateLong(new Date(date + 'T00:00:00'))}. Click to change.`}
+              tabIndex={0}
+            >
+              <Calendar className="h-4 w-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
+              <span className="text-sm font-medium">
+                {formatDateLong(new Date(date + 'T00:00:00'))}
+              </span>
+            </button>
           </div>
 
           {/* Exposure Type */}

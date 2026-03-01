@@ -1,5 +1,25 @@
 import { describe, it, expect } from 'vitest';
-import { formatDate, formatTime, formatDateTime, capitalizeFirst, getReactionEmoji, getReactionLabel } from './utils';
+import { formatDate, formatDateLong, formatTime, formatDateTime, capitalizeFirst, getReactionEmoji, getReactionLabel } from './utils';
+
+describe('formatDateLong', () => {
+  it('formats a date with full weekday and long month', () => {
+    const date = new Date('2024-01-15T00:00:00');
+    const result = formatDateLong(date);
+    expect(result).toBe('Monday, January 15, 2024');
+  });
+
+  it('formats a date at year boundary', () => {
+    const date = new Date('2024-12-31T00:00:00');
+    const result = formatDateLong(date);
+    expect(result).toBe('Tuesday, December 31, 2024');
+  });
+
+  it('formats a weekend date', () => {
+    const date = new Date('2026-03-01T00:00:00');
+    const result = formatDateLong(date);
+    expect(result).toBe('Sunday, March 1, 2026');
+  });
+});
 
 describe('formatDate', () => {
   it('formats a date in US locale', () => {
