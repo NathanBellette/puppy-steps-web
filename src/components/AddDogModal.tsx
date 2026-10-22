@@ -3,76 +3,92 @@ import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Spinner } from './ui/Spinner';
+import { FormField } from './ui/FormField';
+import { PhotoField } from './PhotoField';
 import { useDogs } from '@/hooks/useDogProfile';
-import { X } from 'lucide-react';
+import { usePhotoInput } from '@/hooks/usePhotoInput';
 
 interface AddDogModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+const emptyForm = { name: '', age: '', breed: '' };
+
+type DogForm = typeof emptyForm;
+
+const textFields: Array<{
+  key: keyof DogForm;
+  label: string;
+  placeholder: string;
+  type?: string;
+  min?: string;
+  max?: string;
+  hint?: string;
+}> = [
+  { key: 'name', label: 'Name *', placeholder: 'e.g., Buddy' },
+  {
+    key: 'age',
+    label: 'Age (in months) *',
+    placeholder: 'e.g., 6',
+    type: 'number',
+    min: '0',
+    max: '300',
+    hint: 'Enter age in months (e.g., 6 months old)',
+  },
+  { key: 'breed', label: 'Breed *', placeholder: 'e.g., Golden Retriever' },
+];
+
 export const AddDogModal = ({ isOpen, onClose }: AddDogModalProps) => {
   const { createDog, isCreating } = useDogs();
-  const [name, setName] = useState('');
-  const [age, setAge] = useState('');
-  const [breed, setBreed] = useState('');
-  const [photo, setPhoto] = useState<File | null>(null);
+  const [form, setForm] = useState<DogForm>(emptyForm);
+  const photoInput = usePhotoInput();
+  const { photo, setPhoto } = photoInput;
   const [error, setError] = useState('');
+
+  const resetForm = () => {
+    setForm(emptyForm);
+    setPhoto(null);
+    setError('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!name.trim()) {
+    if (!form.name.trim()) {
       setError('Please enter a name');
       return;
     }
 
-    if (!age || parseInt(age) < 0) {
+    if (!form.age || parseInt(form.age) < 0) {
       setError('Please enter a valid age');
       return;
     }
 
-    if (!breed.trim()) {
+    if (!form.breed.trim()) {
       setError('Please enter a breed');
       return;
     }
 
     try {
       await createDog({
-        name: name.trim(),
-        age: parseInt(age),
-        breed: breed.trim(),
+        name: form.name.trim(),
+        age: parseInt(form.age),
+        breed: form.breed.trim(),
         photo: photo || undefined,
       });
 
-      // Reset form
-      setName('');
-      setAge('');
-      setBreed('');
-      setPhoto(null);
-      setError('');
-      
+      resetForm();
       onClose();
     } catch {
       setError('Failed to add dog. Please try again.');
     }
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setPhoto(file);
-    }
-  };
-
   const handleClose = () => {
     if (!isCreating) {
-      setName('');
-      setAge('');
-      setBreed('');
-      setPhoto(null);
-      setError('');
+      resetForm();
       onClose();
     }
   };
@@ -86,85 +102,23 @@ export const AddDogModal = ({ isOpen, onClose }: AddDogModalProps) => {
           </div>
         )}
 
-        {/* Name */}
-        <div>
-          <label htmlFor="dog-name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Name *
-          </label>
-          <Input
-            id="dog-name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g., Buddy"
-            required
-            disabled={isCreating}
-          />
-        </div>
+        {textFields.map(({ key, label, placeholder, type = 'text', min, max, hint }) => (
+          <FormField key={key} label={label} htmlFor={`dog-${key}`} hint={hint}>
+            <Input
+              id={`dog-${key}`}
+              type={type}
+              min={min}
+              max={max}
+              value={form[key]}
+              onChange={(e) => setForm((current) => ({ ...current, [key]: e.target.value }))}
+              placeholder={placeholder}
+              required
+              disabled={isCreating}
+            />
+          </FormField>
+        ))}
 
-        {/* Age */}
-        <div>
-          <label htmlFor="dog-age" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Age (in months) *
-          </label>
-          <Input
-            id="dog-age"
-            type="number"
-            min="0"
-            max="300"
-            value={age}
-            onChange={(e) => setAge(e.target.value)}
-            placeholder="e.g., 6"
-            required
-            disabled={isCreating}
-          />
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Enter age in months (e.g., 6 months old)
-          </p>
-        </div>
-
-        {/* Breed */}
-        <div>
-          <label htmlFor="dog-breed" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Breed *
-          </label>
-          <Input
-            id="dog-breed"
-            type="text"
-            value={breed}
-            onChange={(e) => setBreed(e.target.value)}
-            placeholder="e.g., Golden Retriever"
-            required
-            disabled={isCreating}
-          />
-        </div>
-
-        {/* Photo */}
-        <div>
-          <label htmlFor="dog-photo" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Photo (optional)
-          </label>
-          <Input
-            id="dog-photo"
-            type="file"
-            accept="image/*"
-            onChange={handlePhotoChange}
-            disabled={isCreating}
-          />
-          {photo && (
-            <div className="mt-2 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-              <span>{photo.name}</span>
-              <button
-                type="button"
-                onClick={() => setPhoto(null)}
-                className="text-red-500 hover:text-red-700"
-                disabled={isCreating}
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          )}
-        </div>
+        <PhotoField id="dog-photo" {...photoInput} disabled={isCreating} />
 
         {/* Actions */}
         <div className="flex gap-3 pt-4">
@@ -196,4 +150,3 @@ export const AddDogModal = ({ isOpen, onClose }: AddDogModalProps) => {
     </Modal>
   );
 };
-

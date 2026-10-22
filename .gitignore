@@ -170,3 +170,8 @@ dist/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# deslop reports and fingerprint cache
+.deslop/
+
+.too_many_cooks/

@@ -13,6 +13,7 @@ import {
   Timestamp,
   QueryConstraint,
   DocumentData,
+  WhereFilterOp,
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { Dog, Session, Goal, SessionFilters } from '@/types';
@@ -81,23 +82,26 @@ export function convertTimestamps<T>(data: DocumentData): T {
 
 // --- Generic CRUD operations ---
 
+/** Fields Firestore or this module set, which callers never write directly. */
+type SystemFields = 'id' | 'createdAt' | 'updatedAt';
+type NewDocument<T> = Omit<T, SystemFields>;
+type DocumentUpdate<T> = Partial<Omit<T, SystemFields | 'userId'>>;
+
+/** Adds matching createdAt/updatedAt stamps to a new document. */
+const withCreationTimestamps = <T>(data: T, now = new Date()) => ({ ...data, createdAt: now, updatedAt: now });
+
 export const createDocument = async <T extends Record<string, any>>(
   collectionName: string,
-  data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>
+  data: NewDocument<T>
 ): Promise<string> => {
-  const now = new Date();
-  const docRef = await addDoc(collection(db, collectionName), {
-    ...data,
-    createdAt: now,
-    updatedAt: now,
-  });
+  const docRef = await addDoc(collection(db, collectionName), withCreationTimestamps(data));
   return docRef.id;
 };
 
 export const updateDocument = async <T extends Record<string, any>>(
   collectionName: string,
   id: string,
-  data: Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>
+  data: DocumentUpdate<T>
 ): Promise<void> => {
   const docRef = doc(db, collectionName, id);
   await updateDoc(docRef, {
@@ -123,101 +127,64 @@ export const getDocuments = async <T>(
   );
 };
 
-// --- Dog-specific operations ---
+/** Builds the create, update and delete operations for one collection. */
+const collectionOperations = <T extends Record<string, any>>(collectionName: string) => ({
+  create: (data: NewDocument<T>) => createDocument<T>(collectionName, data),
+  update: (id: string, data: DocumentUpdate<T>) => updateDocument<T>(collectionName, id, data),
+  delete: (id: string) => deleteDocument(collectionName, id),
+});
 
-export const createDog = async (dogData: Omit<Dog, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
-  return createDocument<Dog>(COLLECTIONS.DOGS, dogData);
-};
+/** A filter that only applies when its value is set. */
+const whereIfSet = (field: string, op: WhereFilterOp, value: unknown): QueryConstraint[] =>
+  value ? [where(field, op, value)] : [];
 
-export const updateDog = async (id: string, data: Partial<Omit<Dog, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>): Promise<void> => {
-  return updateDocument<Dog>(COLLECTIONS.DOGS, id, data);
-};
-
-export const deleteDog = async (id: string): Promise<void> => {
-  return deleteDocument(COLLECTIONS.DOGS, id);
-};
-
-export const getUserDogs = async (userId: string): Promise<Dog[]> => {
-  return getDocuments<Dog>(COLLECTIONS.DOGS, [
+/** Reads a user's documents, newest first by `orderField`, capped at DEFAULT_QUERY_LIMIT. */
+const getUserDocuments = async <T>(
+  collectionName: string,
+  userId: string,
+  orderField: string,
+  filters: QueryConstraint[] = []
+): Promise<T[]> =>
+  getDocuments<T>(collectionName, [
     where('userId', '==', userId),
-    orderBy('createdAt', 'desc'),
+    orderBy(orderField, 'desc'),
+    ...filters,
     limit(DEFAULT_QUERY_LIMIT),
   ]);
-};
+
+// --- Dog-specific operations ---
+
+export const { create: createDog, update: updateDog, delete: deleteDog } = collectionOperations<Dog>(COLLECTIONS.DOGS);
+
+export const getUserDogs = async (userId: string): Promise<Dog[]> =>
+  getUserDocuments<Dog>(COLLECTIONS.DOGS, userId, 'createdAt');
 
 // --- Session-specific operations ---
 
-export const createSession = async (sessionData: Omit<Session, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
-  return createDocument<Session>(COLLECTIONS.SESSIONS, sessionData);
-};
-
-export const updateSession = async (id: string, data: Partial<Omit<Session, 'id' | 'createdAt' | 'updatedAt'>>): Promise<void> => {
-  return updateDocument<Session>(COLLECTIONS.SESSIONS, id, data);
-};
-
-export const deleteSession = async (id: string): Promise<void> => {
-  return deleteDocument(COLLECTIONS.SESSIONS, id);
-};
+export const {
+  create: createSession,
+  update: updateSession,
+  delete: deleteSession,
+} = collectionOperations<Session>(COLLECTIONS.SESSIONS);
 
 export const getUserSessions = async (
   userId: string,
   dogId?: string,
   filters?: SessionFilters
-): Promise<Session[]> => {
-  const constraints: QueryConstraint[] = [
-    where('userId', '==', userId),
-    orderBy('date', 'desc'),
-  ];
-
-  if (dogId) {
-    constraints.push(where('dogId', '==', dogId));
-  }
-
-  if (filters?.type) {
-    constraints.push(where('type', '==', filters.type));
-  }
-
-  if (filters?.dateFrom) {
-    constraints.push(where('date', '>=', filters.dateFrom));
-  }
-
-  if (filters?.dateTo) {
-    constraints.push(where('date', '<=', filters.dateTo));
-  }
-
-  constraints.push(limit(DEFAULT_QUERY_LIMIT));
-
-  return getDocuments<Session>(COLLECTIONS.SESSIONS, constraints);
-};
+): Promise<Session[]> =>
+  getUserDocuments<Session>(COLLECTIONS.SESSIONS, userId, 'date', [
+    ...whereIfSet('dogId', '==', dogId),
+    ...whereIfSet('type', '==', filters?.type),
+    ...whereIfSet('date', '>=', filters?.dateFrom),
+    ...whereIfSet('date', '<=', filters?.dateTo),
+  ]);
 
 // --- Goal-specific operations ---
 
-export const createGoal = async (goalData: Omit<Goal, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
-  return createDocument<Goal>(COLLECTIONS.GOALS, goalData);
-};
+export const { create: createGoal, update: updateGoal, delete: deleteGoal } = collectionOperations<Goal>(COLLECTIONS.GOALS);
 
-export const updateGoal = async (id: string, data: Partial<Omit<Goal, 'id' | 'userId' | 'createdAt'>>): Promise<void> => {
-  return updateDocument<Goal>(COLLECTIONS.GOALS, id, data);
-};
-
-export const deleteGoal = async (id: string): Promise<void> => {
-  return deleteDocument(COLLECTIONS.GOALS, id);
-};
-
-export const getUserGoals = async (userId: string, dogId?: string): Promise<Goal[]> => {
-  const constraints: QueryConstraint[] = [
-    where('userId', '==', userId),
-    orderBy('createdAt', 'desc'),
-  ];
-
-  if (dogId) {
-    constraints.push(where('dogId', '==', dogId));
-  }
-
-  constraints.push(limit(DEFAULT_QUERY_LIMIT));
-
-  return getDocuments<Goal>(COLLECTIONS.GOALS, constraints);
-};
+export const getUserGoals = async (userId: string, dogId?: string): Promise<Goal[]> =>
+  getUserDocuments<Goal>(COLLECTIONS.GOALS, userId, 'createdAt', whereIfSet('dogId', '==', dogId));
 
 // --- Batch operations ---
 
@@ -226,18 +193,14 @@ export const getUserGoals = async (userId: string, dogId?: string): Promise<Goal
  * Firestore batch limit is 500 writes.
  */
 export const createGoalsBatch = async (
-  goalsData: Omit<Goal, 'id' | 'createdAt' | 'updatedAt'>[]
+  goalsData: NewDocument<Goal>[]
 ): Promise<void> => {
   const batch = writeBatch(db);
   const now = new Date();
 
   for (const goalData of goalsData) {
     const docRef = doc(collection(db, COLLECTIONS.GOALS));
-    batch.set(docRef, {
-      ...goalData,
-      createdAt: now,
-      updatedAt: now,
-    });
+    batch.set(docRef, withCreationTimestamps(goalData, now));
   }
 
   await batch.commit();

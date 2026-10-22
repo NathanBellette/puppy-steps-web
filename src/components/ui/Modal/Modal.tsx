@@ -1,5 +1,6 @@
 import { forwardRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { createStyledElement } from '@/lib/createStyledElement';
 import { X } from 'lucide-react';
 
 export interface ModalProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -96,40 +97,18 @@ const ModalHeader = forwardRef<HTMLDivElement, ModalHeaderProps>(
 );
 ModalHeader.displayName = 'ModalHeader';
 
-const ModalContent = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn('p-6', className)}
-      {...props}
-    />
-  )
-);
-ModalContent.displayName = 'ModalContent';
+const ModalContent = createStyledElement<HTMLDivElement>('div', 'p-6', 'ModalContent');
 
-const ModalFooter = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn(
-        'flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 p-6 border-t border-slate-200 dark:border-slate-700',
-        className
-      )}
-      {...props}
-    />
-  )
+const ModalFooter = createStyledElement<HTMLDivElement>(
+  'div',
+  'flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 p-6 border-t border-slate-200 dark:border-slate-700',
+  'ModalFooter'
 );
-ModalFooter.displayName = 'ModalFooter';
 
-const ModalTitle = forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
-  ({ className, ...props }, ref) => (
-    <h2
-      ref={ref}
-      className={cn('text-lg font-semibold text-slate-900 dark:text-slate-100', className)}
-      {...props}
-    />
-  )
+const ModalTitle = createStyledElement<HTMLHeadingElement>(
+  'h2',
+  'text-lg font-semibold text-slate-900 dark:text-slate-100',
+  'ModalTitle'
 );
-ModalTitle.displayName = 'ModalTitle';
 
 export { Modal, ModalHeader, ModalContent, ModalFooter, ModalTitle };

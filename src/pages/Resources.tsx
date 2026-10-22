@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { cn } from '@/lib/utils';
 import { BookOpen, ExternalLink, FileText, Book, Mail } from 'lucide-react';
 
@@ -139,14 +140,10 @@ export const Resources = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-          Training Resources
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400">
-          Expert guides and articles to help with your puppy's socialisation
-        </p>
-      </div>
+      <PageHeader
+        title="Training Resources"
+        description="Expert guides and articles to help with your puppy's socialisation"
+      />
 
       {/* Category Selector */}
       <SegmentedControl

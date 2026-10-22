@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { Layout } from './Layout';
+import { expectTexts } from '@/test/utils';
 
 // Mock the child components
 vi.mock('../Sidebar/Sidebar', () => ({
@@ -28,34 +29,32 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-const LayoutWrapper = () => (
-  <BrowserRouter>
-    <Layout />
-  </BrowserRouter>
-);
+const renderLayout = () =>
+  render(
+    <BrowserRouter>
+      <Layout />
+    </BrowserRouter>
+  );
 
 describe('Layout', () => {
   it('renders all layout components', () => {
-    render(<LayoutWrapper />);
-    
-    expect(screen.getByTestId('sidebar')).toBeInTheDocument();
-    expect(screen.getByTestId('header')).toBeInTheDocument();
-    expect(screen.getByTestId('mobile-nav')).toBeInTheDocument();
-    expect(screen.getByTestId('outlet')).toBeInTheDocument();
+    renderLayout();
+
+    ['sidebar', 'header', 'mobile-nav', 'outlet'].forEach((testId) => {
+      expect(screen.getByTestId(testId)).toBeInTheDocument();
+    });
   });
 
   it('renders main content area', () => {
-    render(<LayoutWrapper />);
+    renderLayout();
     expect(screen.getByRole('main')).toBeInTheDocument();
   });
 
-  it('renders mobile navigation', () => {
-    render(<LayoutWrapper />);
-    expect(screen.getByText('Mobile Navigation')).toBeInTheDocument();
-  });
-
-  it('renders page content through outlet', () => {
-    render(<LayoutWrapper />);
-    expect(screen.getByText('Page Content')).toBeInTheDocument();
+  it.each([
+    { scenario: 'renders mobile navigation', text: 'Mobile Navigation' },
+    { scenario: 'renders page content through outlet', text: 'Page Content' },
+  ])('$scenario', ({ text }) => {
+    renderLayout();
+    expectTexts(text);
   });
 });

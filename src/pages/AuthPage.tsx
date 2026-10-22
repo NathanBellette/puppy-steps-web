@@ -1,27 +1,66 @@
 import { useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, FieldError, FieldValues, Path, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { FormField } from '@/components/ui/FormField';
+import { AppLogo } from '@/components/AppLogo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
-import { cn } from '@/lib/utils';
+import { cn, getErrorMessage } from '@/lib/utils';
 
 const signInSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
-const signUpSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+const signUpSchema = signInSchema.extend({
   displayName: z.string().min(2, 'Name must be at least 2 characters'),
 });
 
 type SignInForm = z.infer<typeof signInSchema>;
 type SignUpForm = z.infer<typeof signUpSchema>;
+
+interface AuthFieldConfig<T extends FieldValues> {
+  id: Path<T>;
+  label: string;
+  type: string;
+}
+
+const emailField = { id: 'email', label: 'Email Address', type: 'email' } as const;
+const passwordField = { id: 'password', label: 'Password', type: 'password' } as const;
+
+const signInFields: AuthFieldConfig<SignInForm>[] = [emailField, passwordField];
+const signUpFields: AuthFieldConfig<SignUpForm>[] = [
+  { id: 'displayName', label: 'Full Name', type: 'text' },
+  emailField,
+  passwordField,
+];
+
+/** Renders a labelled input for each field, wired to the form's validation errors. */
+const AuthFields = <T extends FieldValues>({ form, fields }: { form: UseFormReturn<T>; fields: AuthFieldConfig<T>[] }) => (
+  <>
+    {fields.map(({ id, label, type }) => {
+      const error = form.formState.errors[id] as FieldError | undefined;
+      return (
+        <FormField key={id} label={label} htmlFor={id} error={error?.message} labelClassName="">
+          <Input id={id} type={type} {...form.register(id)} className={cn(error && 'border-red-500')} />
+        </FormField>
+      );
+    })}
+  </>
+);
+
+const SubmitButton = ({ isLoading, label, loadingLabel }: { isLoading: boolean; label: string; loadingLabel: string }) => (
+  <Button type="submit" className="w-full" disabled={isLoading}>
+    {isLoading ? loadingLabel : label}
+  </Button>
+);
+
+const linkButtonClassName =
+  'text-sm text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300';
 
 export const AuthPage = () => {
   const { user, signIn, signUp, resetPassword } = useAuth();
@@ -47,27 +86,37 @@ export const AuthPage = () => {
     return <Navigate to={from} replace />;
   }
 
-  const onSubmitSignIn = async (data: SignInForm) => {
+  const runAuthAction = async (action: () => Promise<void>, failureMessage: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      await signIn(data.email, data.password);
+      await action();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign in failed');
+      setError(getErrorMessage(err, failureMessage));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const onSubmitSignUp = async (data: SignUpForm) => {
-    setIsLoading(true);
+  const handleSignIn = (data: SignInForm) =>
+    runAuthAction(() => signIn(data.email, data.password), 'Sign in failed');
+
+  const handleSignUp = (data: SignUpForm) =>
+    runAuthAction(() => signUp(data.email, data.password, data.displayName), 'Sign up failed');
+
+  const handleForgotPassword = async () => {
+    const email = signInForm.getValues('email');
+    if (!email) {
+      setError('Please enter your email address first');
+      return;
+    }
     setError(null);
+    setResetSent(false);
     try {
-      await signUp(data.email, data.password, data.displayName);
+      await resetPassword(email);
+      setResetSent(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign up failed');
-    } finally {
-      setIsLoading(false);
+      setError(getErrorMessage(err, 'Failed to send reset email'));
     }
   };
 
@@ -75,9 +124,7 @@ export const AuthPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 rounded-lg bg-primary-500 flex items-center justify-center">
-            <span className="text-white font-bold text-xl">P</span>
-          </div>
+          <AppLogo size="lg" className="mx-auto" />
           <h2 className="mt-6 text-3xl font-bold text-slate-900 dark:text-slate-100">
             {isSignUp ? 'Create your account' : 'Sign in to your account'}
           </h2>
@@ -103,132 +150,16 @@ export const AuthPage = () => {
             )}
 
             {isSignUp ? (
-              <form onSubmit={signUpForm.handleSubmit(onSubmitSignUp)} className="space-y-4">
-                <div>
-                  <label htmlFor="displayName" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Full Name
-                  </label>
-                  <Input
-                    id="displayName"
-                    type="text"
-                    {...signUpForm.register('displayName')}
-                    className={cn(
-                      signUpForm.formState.errors.displayName && 'border-red-500'
-                    )}
-                  />
-                  {signUpForm.formState.errors.displayName && (
-                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                      {signUpForm.formState.errors.displayName.message}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Email Address
-                  </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    {...signUpForm.register('email')}
-                    className={cn(
-                      signUpForm.formState.errors.email && 'border-red-500'
-                    )}
-                  />
-                  {signUpForm.formState.errors.email && (
-                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                      {signUpForm.formState.errors.email.message}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Password
-                  </label>
-                  <Input
-                    id="password"
-                    type="password"
-                    {...signUpForm.register('password')}
-                    className={cn(
-                      signUpForm.formState.errors.password && 'border-red-500'
-                    )}
-                  />
-                  {signUpForm.formState.errors.password && (
-                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                      {signUpForm.formState.errors.password.message}
-                    </p>
-                  )}
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Creating Account...' : 'Create Account'}
-                </Button>
+              <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
+                <AuthFields form={signUpForm} fields={signUpFields} />
+                <SubmitButton isLoading={isLoading} label="Create Account" loadingLabel="Creating Account..." />
               </form>
             ) : (
-              <form onSubmit={signInForm.handleSubmit(onSubmitSignIn)} className="space-y-4">
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Email Address
-                  </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    {...signInForm.register('email')}
-                    className={cn(
-                      signInForm.formState.errors.email && 'border-red-500'
-                    )}
-                  />
-                  {signInForm.formState.errors.email && (
-                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                      {signInForm.formState.errors.email.message}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Password
-                  </label>
-                  <Input
-                    id="password"
-                    type="password"
-                    {...signInForm.register('password')}
-                    className={cn(
-                      signInForm.formState.errors.password && 'border-red-500'
-                    )}
-                  />
-                  {signInForm.formState.errors.password && (
-                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                      {signInForm.formState.errors.password.message}
-                    </p>
-                  )}
-                </div>
+              <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4">
+                <AuthFields form={signInForm} fields={signInFields} />
 
                 <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const email = signInForm.getValues('email');
-                      if (!email) {
-                        setError('Please enter your email address first');
-                        return;
-                      }
-                      setError(null);
-                      setResetSent(false);
-                      try {
-                        await resetPassword(email);
-                        setResetSent(true);
-                      } catch (err) {
-                        setError(err instanceof Error ? err.message : 'Failed to send reset email');
-                      }
-                    }}
-                    className="text-sm text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
-                  >
+                  <button type="button" onClick={handleForgotPassword} className={linkButtonClassName}>
                     Forgot password?
                   </button>
                 </div>
@@ -239,13 +170,7 @@ export const AuthPage = () => {
                   </div>
                 )}
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Signing In...' : 'Sign In'}
-                </Button>
+                <SubmitButton isLoading={isLoading} label="Sign In" loadingLabel="Signing In..." />
               </form>
             )}
 
@@ -253,10 +178,10 @@ export const AuthPage = () => {
               <button
                 type="button"
                 onClick={() => setIsSignUp(!isSignUp)}
-                className="text-sm text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
+                className={linkButtonClassName}
               >
-                {isSignUp 
-                  ? 'Already have an account? Sign in' 
+                {isSignUp
+                  ? 'Already have an account? Sign in'
                   : 'Don\'t have an account? Sign up'
                 }
               </button>

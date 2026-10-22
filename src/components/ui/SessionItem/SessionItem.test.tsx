@@ -1,151 +1,108 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { SessionItem } from './SessionItem';
+import { SessionItem, SessionItemProps } from './SessionItem';
 import { Session } from '@/types';
 import { formatDateTime } from '@/lib/utils';
+import { makeSession } from '@/test/fixtures';
+import { clickButton, expectButtons, expectNoButton, expectTexts } from '@/test/utils';
 
 describe('SessionItem', () => {
-  const mockSession: Session = {
-    id: 'session-1',
-    userId: 'user-1',
-    dogId: 'dog-1',
+  const mockSession = makeSession({
     date: new Date('2024-01-15T10:30:00'),
-    type: 'people',
-    reaction: '😊',
     notes: 'Met a friendly stranger',
+    category: '',
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-01-15'),
-    category: ''
-  };
-
-  const mockOnEdit = vi.fn();
-  const mockOnDelete = vi.fn();
-
-  beforeEach(() => {
-    mockOnEdit.mockClear();
-    mockOnDelete.mockClear();
   });
+
+  const renderSession = (session: Partial<Session> = {}, props: Partial<SessionItemProps> = {}) =>
+    render(<SessionItem session={{ ...mockSession, ...session }} {...props} />);
 
   it('renders session with correct information', () => {
-    render(<SessionItem session={mockSession} />);
-    
-    expect(screen.getByText('People')).toBeInTheDocument();
-    expect(screen.getByText('😊')).toBeInTheDocument();
-    expect(screen.getByText('Positive')).toBeInTheDocument();
-    expect(screen.getByText('Met a friendly stranger')).toBeInTheDocument();
+    renderSession();
+
+    expectTexts('People', '😊', 'Positive', 'Met a friendly stranger');
   });
 
-  it('renders different session types correctly', () => {
-    const { rerender } = render(<SessionItem session={mockSession} />);
-    expect(screen.getByText('People')).toBeInTheDocument();
+  it.each([
+    { type: 'people', label: 'People' },
+    { type: 'dogs', label: 'Dogs' },
+    { type: 'environments', label: 'Environments' },
+    { type: 'noises', label: 'Noises' },
+  ] as const)('renders $type session type as $label', ({ type, label }) => {
+    renderSession({ type });
 
-    rerender(<SessionItem session={{ ...mockSession, type: 'dogs' }} />);
-    expect(screen.getByText('Dogs')).toBeInTheDocument();
-
-    rerender(<SessionItem session={{ ...mockSession, type: 'environments' }} />);
-    expect(screen.getByText('Environments')).toBeInTheDocument();
-
-    rerender(<SessionItem session={{ ...mockSession, type: 'noises' }} />);
-    expect(screen.getByText('Noises')).toBeInTheDocument();
+    expectTexts(label);
   });
 
-  it('renders different reaction levels correctly', () => {
-    const { rerender } = render(<SessionItem session={mockSession} />);
-    expect(screen.getByText('😊')).toBeInTheDocument();
-    expect(screen.getByText('Positive')).toBeInTheDocument();
+  it.each([
+    { reaction: '😊', emoji: '😊', label: 'Positive' },
+    { reaction: '😰', emoji: '😰', label: 'Very Negative' },
+    { reaction: '😍', emoji: '😍', label: 'Very Positive' },
+    // Unknown reactions fall back to neutral
+    { reaction: 'unknown', emoji: '😐', label: 'Neutral' },
+  ])('renders reaction $reaction as $emoji $label', ({ reaction, emoji, label }) => {
+    renderSession({ reaction: reaction as Session['reaction'] });
 
-    rerender(<SessionItem session={{ ...mockSession, reaction: '😰' }} />);
-    expect(screen.getByText('😰')).toBeInTheDocument();
-    expect(screen.getByText('Very Negative')).toBeInTheDocument();
-
-    rerender(<SessionItem session={{ ...mockSession, reaction: '😍' }} />);
-    expect(screen.getByText('😍')).toBeInTheDocument();
-    expect(screen.getByText('Very Positive')).toBeInTheDocument();
+    expectTexts(emoji, label);
   });
 
   it('renders formatted date using the real formatDateTime function', () => {
-    render(<SessionItem session={mockSession} />);
-    const expectedDate = formatDateTime(mockSession.date);
-    expect(screen.getByText(expectedDate)).toBeInTheDocument();
+    renderSession();
+
+    expectTexts(formatDateTime(mockSession.date));
   });
 
   it('renders photo when photoUrl is provided', () => {
-    const sessionWithPhoto = { ...mockSession, photoUrl: 'https://example.com/photo.jpg' };
-    render(<SessionItem session={sessionWithPhoto} />);
-    
-    const img = screen.getByAltText('Session photo');
-    expect(img).toHaveAttribute('src', 'https://example.com/photo.jpg');
+    renderSession({ photoUrl: 'https://example.com/photo.jpg' });
+
+    expect(screen.getByAltText('Session photo')).toHaveAttribute('src', 'https://example.com/photo.jpg');
   });
 
   it('does not render photo when photoUrl is not provided', () => {
-    render(<SessionItem session={mockSession} />);
+    renderSession();
+
     expect(screen.queryByAltText('Session photo')).not.toBeInTheDocument();
   });
 
-  it('does not render notes when notes are not provided', () => {
-    const sessionWithoutNotes = { ...mockSession, notes: undefined };
-    render(<SessionItem session={sessionWithoutNotes} />);
+  it.each([
+    { scenario: 'are not provided', notes: undefined },
+    { scenario: 'are empty', notes: '' },
+  ])('does not render notes when notes $scenario', ({ notes }) => {
+    renderSession({ notes });
+
     expect(screen.queryByText('Met a friendly stranger')).not.toBeInTheDocument();
   });
 
-  it('shows edit button when onEdit is provided', () => {
-    render(<SessionItem session={mockSession} onEdit={mockOnEdit} />);
-    expect(screen.getByRole('button', { name: /edit session/i })).toBeInTheDocument();
+  it.each([
+    { action: 'edit', handler: 'onEdit' },
+    { action: 'delete', handler: 'onDelete' },
+  ] as const)('shows the $action button and calls $handler with the session id', async ({ action, handler }) => {
+    const onAction = vi.fn();
+    renderSession({}, { [handler]: onAction });
+    const buttonName = new RegExp(`${action} session`, 'i');
+
+    expectButtons(buttonName);
+    await clickButton(buttonName);
+
+    expect(onAction).toHaveBeenCalledWith('session-1');
   });
 
-  it('calls onEdit when edit button is clicked', async () => {
-    const user = userEvent.setup();
-    render(<SessionItem session={mockSession} onEdit={mockOnEdit} />);
-    
-    await user.click(screen.getByRole('button', { name: /edit session/i }));
-    expect(mockOnEdit).toHaveBeenCalledWith('session-1');
-  });
+  it.each(['edit', 'delete'])('does not show %s button when its handler is not provided', (action) => {
+    renderSession();
 
-  it('shows delete button when onDelete is provided', () => {
-    render(<SessionItem session={mockSession} onDelete={mockOnDelete} />);
-    expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
-  });
-
-  it('calls onDelete when delete button is clicked', async () => {
-    const user = userEvent.setup();
-    render(<SessionItem session={mockSession} onDelete={mockOnDelete} />);
-    
-    await user.click(screen.getByRole('button', { name: /delete session/i }));
-    expect(mockOnDelete).toHaveBeenCalledWith('session-1');
-  });
-
-  it('does not show edit button when onEdit is not provided', () => {
-    render(<SessionItem session={mockSession} />);
-    expect(screen.queryByRole('button', { name: /edit session/i })).not.toBeInTheDocument();
-  });
-
-  it('does not show delete button when onDelete is not provided', () => {
-    render(<SessionItem session={mockSession} />);
-    expect(screen.queryByRole('button', { name: /delete session/i })).not.toBeInTheDocument();
+    expectNoButton(new RegExp(`${action} session`, 'i'));
   });
 
   it('renders session type icon', () => {
-    render(<SessionItem session={mockSession} />);
+    renderSession();
+
     const iconContainer = screen.getByText('People').closest('div')?.querySelector('svg');
     expect(iconContainer).toBeInTheDocument();
   });
 
-  it('handles empty notes gracefully', () => {
-    const sessionWithEmptyNotes = { ...mockSession, notes: '' };
-    render(<SessionItem session={sessionWithEmptyNotes} />);
-    expect(screen.queryByText('Met a friendly stranger')).not.toBeInTheDocument();
-  });
-
   it('shows category when provided', () => {
-    const sessionWithCategory = { ...mockSession, category: 'Men' };
-    render(<SessionItem session={sessionWithCategory} />);
-    expect(screen.getByText('• Men')).toBeInTheDocument();
-  });
+    renderSession({ category: 'Men' });
 
-  it('falls back to neutral emoji for unknown reaction', () => {
-    const sessionUnknown = { ...mockSession, reaction: 'unknown' as Session['reaction'] };
-    render(<SessionItem session={sessionUnknown} />);
-    expect(screen.getByText('😐')).toBeInTheDocument();
-    expect(screen.getByText('Neutral')).toBeInTheDocument();
+    expectTexts('• Men');
   });
 });

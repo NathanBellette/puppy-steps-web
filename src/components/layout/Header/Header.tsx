@@ -1,9 +1,9 @@
 import { User } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useDogs } from '@/hooks/useDogProfile';
 import { DogAvatar } from '@/components/ui/DogAvatar';
 import { Select, SelectOption } from '@/components/ui/Select';
+import { HomeLink } from '@/components/AppLogo';
 
 export const Header = () => {
   const { user } = useAuth();
@@ -22,16 +22,7 @@ export const Header = () => {
         {/* Left side — App name (mobile only) + Dog selector */}
         <div className="flex items-center">
           {/* Mobile app name */}
-          <Link
-            to="/dashboard"
-            className="lg:hidden flex items-center mr-4"
-            aria-label="Go to home page"
-            tabIndex={0}
-          >
-            <div className="h-8 w-8 rounded-lg bg-primary-500 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">P</span>
-            </div>
-          </Link>
+          <HomeLink className="lg:hidden mr-4" />
 
           {/* Dog selector */}
           <div className="flex items-center space-x-3">

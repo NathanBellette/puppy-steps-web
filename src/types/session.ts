@@ -1,5 +1,16 @@
 export type SessionType = 'people' | 'dogs' | 'environments' | 'noises';
 
+export const SESSION_TYPES: SessionType[] = ['people', 'dogs', 'environments', 'noises'];
+
+/** Summarises the items of each session type into one record. */
+export const summariseBySessionType = <T extends { type: SessionType }, V>(
+  items: T[],
+  summarise: (itemsOfType: T[]) => V
+): Record<SessionType, V> =>
+  Object.fromEntries(
+    SESSION_TYPES.map((type) => [type, summarise(items.filter((item) => item.type === type))])
+  ) as Record<SessionType, V>;
+
 export type ReactionLevel = '😰' | '😟' | '😐' | '😊' | '😍';
 
 export type PlaceType = 'Home' | 'Street' | 'Park' | 'Store' | 'Cafe' | 'Car' | 'Vet' | 'PublicTransport' | 'Other';
@@ -29,9 +40,8 @@ export const INTENSITY_LABELS: Record<Intensity, string> = {
   high: 'High',
 };
 
-export interface Session {
-  id: string;
-  userId: string;
+/** Details shared by a logged session and the form that logs one. */
+export interface SessionDetails {
   dogId: string;
   date: Date;
   type: SessionType;
@@ -41,21 +51,17 @@ export interface Session {
   intensity?: Intensity;
   isNewToDog?: boolean;
   notes?: string;
+}
+
+export interface Session extends SessionDetails {
+  id: string;
+  userId: string;
   photoUrl?: string;
   createdAt: Date;
   updatedAt?: Date;
 }
 
-export interface SessionFormData {
-  dogId: string;
-  date: Date;
-  type: SessionType;
-  category: string;
-  reaction: ReactionLevel;
-  placeType?: PlaceType;
-  intensity?: Intensity;
-  isNewToDog?: boolean;
-  notes?: string;
+export interface SessionFormData extends SessionDetails {
   photo?: File;
 }
 
