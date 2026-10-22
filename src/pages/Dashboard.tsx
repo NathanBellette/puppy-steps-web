@@ -4,18 +4,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { CircularProgress } from '@/components/ui/Progress';
 import { Button } from '@/components/ui/Button';
 import { DogAvatar } from '@/components/ui/DogAvatar';
+import { formatDogDetails } from '@/lib/utils';
 import { GoalItem } from '@/components/ui/GoalItem';
 import { SessionItem } from '@/components/ui/SessionItem';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { NoDogSelected } from '@/components/NoDogSelected';
 import { SkeletonList } from '@/components/ui/SkeletonList';
 import { AddDogModal } from '@/components/AddDogModal';
 import { useDogs } from '@/hooks/useDogProfile';
 import { useGoals } from '@/hooks/useGoals';
 import { useTargetProgress } from '@/hooks/useTargetProgress';
 import { useSessionStats, useSessions } from '@/hooks/useSessions';
-import { getCoachingTip } from '@/services/targetProgress';
+import { getCoachingTip, TargetProgress } from '@/services/targetProgress';
 import { SessionType, SESSION_TYPE_EMOJI } from '@/types';
 import { Target, Calendar, TrendingUp, Plus } from 'lucide-react';
+
+/** Average of the calm and variety completion ratios for a target. */
+const progressScore = (progress: TargetProgress) =>
+  (progress.calmCount / progress.calmTarget + progress.varietyCount / progress.varietyTarget) / 2;
 
 export const Dashboard = () => {
   const navigate = useNavigate();
@@ -48,17 +53,7 @@ export const Dashboard = () => {
       .map((g) => ({ goal: g, progress: progress[g.id] }));
 
     // Sort by total progress ascending (worst progress first)
-    incomplete.sort((a, b) => {
-      const aScore =
-        (a.progress.calmCount / a.progress.calmTarget +
-          a.progress.varietyCount / a.progress.varietyTarget) /
-        2;
-      const bScore =
-        (b.progress.calmCount / b.progress.calmTarget +
-          b.progress.varietyCount / b.progress.varietyTarget) /
-        2;
-      return aScore - bScore;
-    });
+    incomplete.sort((a, b) => progressScore(a.progress) - progressScore(b.progress));
 
     return incomplete.slice(0, 3);
   }, [goals, progress]);
@@ -85,20 +80,13 @@ export const Dashboard = () => {
 
   if (!selectedDog) {
     return (
-      <div className="flex items-center justify-center min-h-96">
-        <Card className="w-full max-w-md">
-          <CardContent className="text-center py-8">
-            <EmptyState
-              icon={Target}
-              title="No Dog Selected"
-              description="Please add a dog profile to start tracking their socialization progress."
-              actionLabel="Add Dog Profile"
-              onAction={() => setShowAddDogModal(true)}
-            />
-          </CardContent>
-        </Card>
+      <NoDogSelected
+        description="Please add a dog profile to start tracking their socialization progress."
+        actionLabel="Add Dog Profile"
+        onAction={() => setShowAddDogModal(true)}
+      >
         <AddDogModal isOpen={showAddDogModal} onClose={() => setShowAddDogModal(false)} />
-      </div>
+      </NoDogSelected>
     );
   }
 
@@ -113,7 +101,7 @@ export const Dashboard = () => {
               {selectedDog.name}'s Dashboard
             </h1>
             <p className="text-slate-500 dark:text-slate-400">
-              {selectedDog.breed} &middot; {selectedDog.age} months old
+              {formatDogDetails(selectedDog)}
             </p>
           </div>
         </div>

@@ -1,35 +1,24 @@
-import { renderHook, waitFor, act } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import React from 'react';
+import { act } from '@testing-library/react';
 import { useSessions, useSessionStats } from './useSessions';
-import { Session } from '@/types';
+import { getUserSessions, createSession, deleteSession } from '@/lib/firestore';
+import { uploadSessionPhoto } from '@/lib/storage';
+import { makePhoto, makeSession } from '@/test/fixtures';
+import { renderLoadedHook } from '@/test/utils';
 
-// --- Mocks ---
+vi.mock('./useAuth');
+vi.mock('@/lib/firestore');
+vi.mock('@/lib/storage');
 
-const mockUser = { uid: 'user-1', email: 'test@test.com', displayName: 'Test' };
-
-vi.mock('./useAuth', () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
-
-const mockSessions: Session[] = [
-  {
-    id: 'session-1',
-    userId: 'user-1',
-    dogId: 'dog-1',
+const mockSessions = [
+  makeSession({
     date: new Date('2024-03-10T10:00:00'),
-    type: 'people',
-    category: 'Men',
-    reaction: '😊',
     placeType: 'Park',
     intensity: 'low',
     isNewToDog: false,
     createdAt: new Date('2024-03-10'),
-  },
-  {
+  }),
+  makeSession({
     id: 'session-2',
-    userId: 'user-1',
-    dogId: 'dog-1',
     date: new Date('2024-03-11T14:00:00'),
     type: 'dogs',
     category: 'Small Dogs',
@@ -38,111 +27,58 @@ const mockSessions: Session[] = [
     intensity: 'medium',
     isNewToDog: true,
     createdAt: new Date('2024-03-11'),
-  },
+  }),
 ];
 
-const mockGetUserSessions = vi.fn().mockResolvedValue(mockSessions);
-const mockCreateSession = vi.fn().mockResolvedValue('session-3');
-const mockUpdateSession = vi.fn().mockResolvedValue(undefined);
-const mockDeleteSession = vi.fn().mockResolvedValue(undefined);
-const mockUploadSessionPhoto = vi.fn().mockResolvedValue('https://example.com/session-photo.jpg');
+const renderSessions = async () => (await renderLoadedHook(() => useSessions('dog-1'))).result;
 
-vi.mock('@/lib/firestore', () => ({
-  getUserSessions: (...args: unknown[]) => mockGetUserSessions(...args),
-  createSession: (...args: unknown[]) => mockCreateSession(...args),
-  updateSession: (...args: unknown[]) => mockUpdateSession(...args),
-  deleteSession: (...args: unknown[]) => mockDeleteSession(...args),
-}));
-
-vi.mock('@/lib/storage', () => ({
-  uploadSessionPhoto: (...args: unknown[]) => mockUploadSessionPhoto(...args),
-}));
-
-// --- Helpers ---
-
-function createWrapper() {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
+const logMenSession = async (photo?: File) => {
+  const result = await renderSessions();
+  await act(async () => {
+    await result.current.createSession({
+      dogId: 'dog-1',
+      date: new Date('2024-03-15'),
+      type: 'people',
+      category: 'Men',
+      reaction: '😊',
+      photo,
+    });
   });
-  return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
-}
-
-// --- Tests ---
+};
 
 describe('useSessions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetUserSessions.mockResolvedValue(mockSessions);
+    vi.mocked(getUserSessions).mockResolvedValue(mockSessions);
+    vi.mocked(createSession).mockResolvedValue('session-3');
+    vi.mocked(uploadSessionPhoto).mockResolvedValue('https://example.com/session-photo.jpg');
   });
 
-  it('fetches sessions for the authenticated user', async () => {
-    const { result } = renderHook(() => useSessions('dog-1'), {
-      wrapper: createWrapper(),
-    });
+  it.each([
+    { scenario: 'fetches sessions for the authenticated user', sessions: mockSessions },
+    { scenario: 'returns empty array when no sessions exist', sessions: [] },
+  ])('$scenario', async ({ sessions }) => {
+    vi.mocked(getUserSessions).mockResolvedValue(sessions);
 
-    expect(result.current.isLoading).toBe(true);
+    const { result, initiallyLoading } = await renderLoadedHook(() => useSessions('dog-1'));
 
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(mockGetUserSessions).toHaveBeenCalledWith('user-1', 'dog-1', undefined);
-    expect(result.current.sessions).toEqual(mockSessions);
+    expect(initiallyLoading).toBe(true);
+    expect(getUserSessions).toHaveBeenCalledWith('user-1', 'dog-1', undefined);
+    expect(result.current.sessions).toEqual(sessions);
   });
 
   it('passes filters to the query function', async () => {
     const filters = { type: 'people' as const };
 
-    const { result } = renderHook(() => useSessions('dog-1', filters), {
-      wrapper: createWrapper(),
-    });
+    await renderLoadedHook(() => useSessions('dog-1', filters));
 
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(mockGetUserSessions).toHaveBeenCalledWith('user-1', 'dog-1', filters);
-  });
-
-  it('returns empty array when no sessions exist', async () => {
-    mockGetUserSessions.mockResolvedValue([]);
-
-    const { result } = renderHook(() => useSessions('dog-1'), {
-      wrapper: createWrapper(),
-    });
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(result.current.sessions).toEqual([]);
+    expect(getUserSessions).toHaveBeenCalledWith('user-1', 'dog-1', filters);
   });
 
   it('createSession calls firestore with correct data', async () => {
-    const { result } = renderHook(() => useSessions('dog-1'), {
-      wrapper: createWrapper(),
-    });
+    await logMenSession();
 
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    await act(async () => {
-      await result.current.createSession({
-        dogId: 'dog-1',
-        date: new Date('2024-03-15'),
-        type: 'people',
-        category: 'Men',
-        reaction: '😊',
-      });
-    });
-
-    expect(mockCreateSession).toHaveBeenCalledWith(
+    expect(createSession).toHaveBeenCalledWith(
       expect.objectContaining({
         dogId: 'dog-1',
         type: 'people',
@@ -154,86 +90,44 @@ describe('useSessions', () => {
   });
 
   it('createSession uploads photo when provided', async () => {
-    const { result } = renderHook(() => useSessions('dog-1'), {
-      wrapper: createWrapper(),
-    });
+    const photo = makePhoto();
 
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
+    await logMenSession(photo);
 
-    const fakePhoto = new File(['photo'], 'photo.jpg', { type: 'image/jpeg' });
-
-    await act(async () => {
-      await result.current.createSession({
-        dogId: 'dog-1',
-        date: new Date('2024-03-15'),
-        type: 'people',
-        category: 'Men',
-        reaction: '😊',
-        photo: fakePhoto,
-      });
-    });
-
-    expect(mockUploadSessionPhoto).toHaveBeenCalledWith(
-      fakePhoto,
+    expect(uploadSessionPhoto).toHaveBeenCalledWith(
+      photo,
       'user-1',
       expect.stringContaining('temp-')
     );
-    expect(mockCreateSession).toHaveBeenCalledWith(
-      expect.objectContaining({
-        photoUrl: 'https://example.com/session-photo.jpg',
-      })
+    expect(createSession).toHaveBeenCalledWith(
+      expect.objectContaining({ photoUrl: 'https://example.com/session-photo.jpg' })
     );
   });
 
   it('deleteSession calls firestore with correct id', async () => {
-    const { result } = renderHook(() => useSessions('dog-1'), {
-      wrapper: createWrapper(),
-    });
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
+    const result = await renderSessions();
 
     await act(async () => {
       await result.current.deleteSession('session-1');
     });
 
-    expect(mockDeleteSession.mock.calls[0][0]).toBe('session-1');
+    expect(vi.mocked(deleteSession).mock.calls[0][0]).toBe('session-1');
   });
 });
 
 describe('useSessionStats', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetUserSessions.mockResolvedValue(mockSessions);
   });
 
-  it('derives stats from session data', async () => {
-    const { result } = renderHook(() => useSessionStats('dog-1'), {
-      wrapper: createWrapper(),
-    });
+  it.each([
+    { sessions: mockSessions, totalSessions: 2, scenario: 'derives stats from session data' },
+    { sessions: [], totalSessions: 0, scenario: 'returns zero stats when no sessions' },
+  ])('$scenario', async ({ sessions, totalSessions }) => {
+    vi.mocked(getUserSessions).mockResolvedValue(sessions);
 
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
+    const { result } = await renderLoadedHook(() => useSessionStats('dog-1'));
 
-    expect(result.current.stats).toBeDefined();
-    expect(result.current.stats.totalSessions).toBe(2);
-  });
-
-  it('returns zero stats when no sessions', async () => {
-    mockGetUserSessions.mockResolvedValue([]);
-
-    const { result } = renderHook(() => useSessionStats('dog-1'), {
-      wrapper: createWrapper(),
-    });
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(result.current.stats.totalSessions).toBe(0);
+    expect(result.current.stats).toMatchObject({ totalSessions });
   });
 });

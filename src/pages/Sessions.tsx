@@ -2,16 +2,17 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
 import { SessionItem } from '@/components/ui/SessionItem';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { NoDogSelected } from '@/components/NoDogSelected';
+import { ConfirmDeleteModal } from '@/components/ConfirmDeleteModal';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { SkeletonList } from '@/components/ui/SkeletonList';
 import { useDogs } from '@/hooks/useDogProfile';
 import { useSessions } from '@/hooks/useSessions';
 import { useToast } from '@/context/ToastContext';
 import { SessionType, SESSION_TYPE_EMOJI } from '@/types';
-import { Plus, Calendar, Target } from 'lucide-react';
+import { Plus, Calendar } from 'lucide-react';
 
 const TYPE_FILTERS = [
   { label: 'All', value: 'all' as const, emoji: '📋' },
@@ -46,37 +47,21 @@ export const Sessions = () => {
   };
 
   if (!selectedDog) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <Card className="w-full max-w-md">
-          <CardContent className="text-center py-8">
-            <EmptyState
-              icon={Target}
-              title="No Dog Selected"
-              description="Please select a dog to view and log their socialization sessions."
-            />
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <NoDogSelected description="Please select a dog to view and log their socialization sessions." />;
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            Session Log
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400">
-            Log and track {selectedDog.name}'s socialisation sessions
-          </p>
-        </div>
-        <Button onClick={() => navigate('/log-exposure')}>
-          <Plus className="h-4 w-4 mr-2" />
-          Log Session
-        </Button>
-      </div>
+      <PageHeader
+        title="Session Log"
+        description={`Log and track ${selectedDog.name}'s socialisation sessions`}
+        action={
+          <Button onClick={() => navigate('/log-exposure')}>
+            <Plus className="h-4 w-4 mr-2" />
+            Log Session
+          </Button>
+        }
+      />
 
       {/* Type Filter */}
       <SegmentedControl
@@ -131,35 +116,14 @@ export const Sessions = () => {
         </CardContent>
       </Card>
 
-      {/* Delete Confirmation Modal */}
-      <Modal
+      <ConfirmDeleteModal
         isOpen={deleteConfirmId !== null}
-        onClose={() => setDeleteConfirmId(null)}
         title="Delete Session"
-      >
-        <div className="space-y-4">
-          <p className="text-slate-600 dark:text-slate-400">
-            Are you sure you want to delete this session? This action cannot be undone.
-          </p>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setDeleteConfirmId(null)}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="flex-1"
-            >
-              {isDeleting ? 'Deleting...' : 'Delete'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        message="Are you sure you want to delete this session? This action cannot be undone."
+        onCancel={() => setDeleteConfirmId(null)}
+        onConfirm={handleDelete}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 };

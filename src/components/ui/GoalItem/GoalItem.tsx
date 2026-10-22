@@ -25,6 +25,35 @@ function formatTimeAgo(date: Date): string {
   return date.toLocaleDateString();
 }
 
+interface ProgressRowProps {
+  label: string;
+  count: number;
+  target: number;
+  barClassName: string;
+}
+
+/** Labelled progress bar with a count/target readout. */
+const ProgressRow = ({ label, count, target, barClassName }: ProgressRowProps) => {
+  const percentage = target > 0 ? Math.min((count / target) * 100, 100) : 0;
+
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-xs font-medium text-slate-500 dark:text-slate-400 w-12">{label}</span>
+      <div className="flex-1">
+        <div className="relative h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+          <div
+            className={cn('absolute h-full transition-all duration-300 rounded-full', barClassName)}
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+      </div>
+      <span className="text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap w-10 text-right">
+        {count}/{target}
+      </span>
+    </div>
+  );
+};
+
 const GoalItem = ({
   goal,
   progress,
@@ -39,9 +68,6 @@ const GoalItem = ({
   const varietyTarget = progress?.varietyTarget ?? goal.varietyTargetCount ?? 3;
   const isComplete = progress?.isComplete ?? false;
   const lastLogged = progress?.lastLogged ?? null;
-
-  const calmPct = calmTarget > 0 ? Math.min((calmCount / calmTarget) * 100, 100) : 0;
-  const varietyPct = varietyTarget > 0 ? Math.min((varietyCount / varietyTarget) * 100, 100) : 0;
 
   return (
     <div
@@ -100,43 +126,18 @@ const GoalItem = ({
 
       {/* Dual progress bars */}
       <div className="space-y-2">
-        {/* Calm progress */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-medium text-slate-500 dark:text-slate-400 w-12">Calm</span>
-          <div className="flex-1">
-            <div className="relative h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-              <div
-                className={cn(
-                  'absolute h-full transition-all duration-300 rounded-full',
-                  isComplete ? 'bg-emerald-500' : 'bg-primary-500'
-                )}
-                style={{ width: `${calmPct}%` }}
-              />
-            </div>
-          </div>
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap w-10 text-right">
-            {calmCount}/{calmTarget}
-          </span>
-        </div>
-
-        {/* Variety progress */}
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-medium text-slate-500 dark:text-slate-400 w-12">Variety</span>
-          <div className="flex-1">
-            <div className="relative h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-              <div
-                className={cn(
-                  'absolute h-full transition-all duration-300 rounded-full',
-                  isComplete ? 'bg-emerald-500' : 'bg-accent-500'
-                )}
-                style={{ width: `${varietyPct}%` }}
-              />
-            </div>
-          </div>
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap w-10 text-right">
-            {varietyCount}/{varietyTarget}
-          </span>
-        </div>
+        <ProgressRow
+          label="Calm"
+          count={calmCount}
+          target={calmTarget}
+          barClassName={isComplete ? 'bg-emerald-500' : 'bg-primary-500'}
+        />
+        <ProgressRow
+          label="Variety"
+          count={varietyCount}
+          target={varietyTarget}
+          barClassName={isComplete ? 'bg-emerald-500' : 'bg-accent-500'}
+        />
       </div>
 
       {/* Status line */}

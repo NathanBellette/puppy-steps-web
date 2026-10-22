@@ -1,114 +1,62 @@
 import { describe, it, expect } from 'vitest';
 import { formatDate, formatDateLong, formatTime, formatDateTime, capitalizeFirst, getReactionEmoji, getReactionLabel } from './utils';
 
-describe('formatDateLong', () => {
-  it('formats a date with full weekday and long month', () => {
-    const date = new Date('2024-01-15T00:00:00');
-    const result = formatDateLong(date);
-    expect(result).toBe('Monday, January 15, 2024');
-  });
-
-  it('formats a date at year boundary', () => {
-    const date = new Date('2024-12-31T00:00:00');
-    const result = formatDateLong(date);
-    expect(result).toBe('Tuesday, December 31, 2024');
-  });
-
-  it('formats a weekend date', () => {
-    const date = new Date('2026-03-01T00:00:00');
-    const result = formatDateLong(date);
-    expect(result).toBe('Sunday, March 1, 2026');
-  });
-});
-
-describe('formatDate', () => {
-  it('formats a date in US locale', () => {
-    const date = new Date('2024-01-15T00:00:00');
-    const result = formatDate(date);
-    expect(result).toBe('Jan 15, 2024');
-  });
-
-  it('formats a date at year boundary', () => {
-    const date = new Date('2024-12-31T00:00:00');
-    const result = formatDate(date);
-    expect(result).toBe('Dec 31, 2024');
-  });
-});
-
-describe('formatTime', () => {
-  it('formats morning time', () => {
-    const date = new Date('2024-01-15T09:30:00');
-    const result = formatTime(date);
-    expect(result).toMatch(/9:30\s*AM/);
-  });
-
-  it('formats afternoon time', () => {
-    const date = new Date('2024-01-15T14:05:00');
-    const result = formatTime(date);
-    expect(result).toMatch(/2:05\s*PM/);
-  });
-
-  it('formats midnight', () => {
-    const date = new Date('2024-01-15T00:00:00');
-    const result = formatTime(date);
-    expect(result).toMatch(/12:00\s*AM/);
-  });
-});
-
-describe('formatDateTime', () => {
-  it('combines date and time with "at"', () => {
-    const date = new Date('2024-01-15T09:30:00');
-    const result = formatDateTime(date);
-    expect(result).toContain('Jan 15, 2024');
-    expect(result).toContain('at');
-    expect(result).toMatch(/9:30\s*AM/);
+describe.each([
+  {
+    name: 'formatDateLong',
+    format: formatDateLong,
+    cases: {
+      '2024-01-15T00:00:00': 'Monday, January 15, 2024',
+      '2024-12-31T00:00:00': 'Tuesday, December 31, 2024',
+      '2026-03-01T00:00:00': 'Sunday, March 1, 2026',
+    },
+  },
+  {
+    name: 'formatDate',
+    format: formatDate,
+    cases: { '2024-01-15T00:00:00': 'Jan 15, 2024', '2024-12-31T00:00:00': 'Dec 31, 2024' },
+  },
+  {
+    name: 'formatTime',
+    format: formatTime,
+    cases: { '2024-01-15T09:30:00': '9:30 AM', '2024-01-15T14:05:00': '2:05 PM', '2024-01-15T00:00:00': '12:00 AM' },
+  },
+  {
+    name: 'formatDateTime',
+    format: formatDateTime,
+    cases: { '2024-01-15T09:30:00': 'Jan 15, 2024 at 9:30 AM' },
+  },
+])('$name', ({ format, cases }) => {
+  it.each(Object.entries(cases))('formats %s as %s', (iso, expected) => {
+    // ICU may separate AM/PM with a narrow no-break space
+    expect(format(new Date(iso)).replace(/\s/g, ' ')).toBe(expected);
   });
 });
 
 describe('capitalizeFirst', () => {
-  it('capitalizes the first character', () => {
-    expect(capitalizeFirst('hello')).toBe('Hello');
-  });
-
-  it('handles already-capitalized string', () => {
-    expect(capitalizeFirst('Hello')).toBe('Hello');
-  });
-
-  it('handles empty string', () => {
-    expect(capitalizeFirst('')).toBe('');
-  });
-
-  it('handles single character', () => {
-    expect(capitalizeFirst('a')).toBe('A');
-  });
-
-  it('preserves the rest of the string', () => {
-    expect(capitalizeFirst('hELLO wORLD')).toBe('HELLO wORLD');
+  it.each([
+    { scenario: 'capitalizes the first character', input: 'hello', expected: 'Hello' },
+    { scenario: 'handles already-capitalized string', input: 'Hello', expected: 'Hello' },
+    { scenario: 'handles empty string', input: '', expected: '' },
+    { scenario: 'handles single character', input: 'a', expected: 'A' },
+    { scenario: 'preserves the rest of the string', input: 'hELLO wORLD', expected: 'HELLO wORLD' },
+  ])('$scenario', ({ input, expected }) => {
+    expect(capitalizeFirst(input)).toBe(expected);
   });
 });
 
-describe('getReactionEmoji', () => {
-  it('returns the matching emoji', () => {
-    expect(getReactionEmoji('😊')).toBe('😊');
-    expect(getReactionEmoji('😰')).toBe('😰');
-    expect(getReactionEmoji('😍')).toBe('😍');
-  });
-
-  it('defaults to neutral for unknown reaction', () => {
-    expect(getReactionEmoji('unknown')).toBe('😐');
-  });
-});
-
-describe('getReactionLabel', () => {
-  it('returns correct labels for all reactions', () => {
-    expect(getReactionLabel('😰')).toBe('Very Negative');
-    expect(getReactionLabel('😟')).toBe('Negative');
-    expect(getReactionLabel('😐')).toBe('Neutral');
-    expect(getReactionLabel('😊')).toBe('Positive');
-    expect(getReactionLabel('😍')).toBe('Very Positive');
-  });
-
-  it('defaults to Neutral for unknown reaction', () => {
-    expect(getReactionLabel('unknown')).toBe('Neutral');
+describe('getReactionEmoji and getReactionLabel', () => {
+  it.each([
+    { reaction: '😰', emoji: '😰', label: 'Very Negative' },
+    { reaction: '😟', emoji: '😟', label: 'Negative' },
+    { reaction: '😐', emoji: '😐', label: 'Neutral' },
+    { reaction: '😊', emoji: '😊', label: 'Positive' },
+    { reaction: '😍', emoji: '😍', label: 'Very Positive' },
+    // Unknown values, including inherited object keys, fall back to neutral
+    { reaction: 'unknown', emoji: '😐', label: 'Neutral' },
+    { reaction: 'toString', emoji: '😐', label: 'Neutral' },
+  ])('maps $reaction to $emoji $label', ({ reaction, emoji, label }) => {
+    expect(getReactionEmoji(reaction)).toBe(emoji);
+    expect(getReactionLabel(reaction)).toBe(label);
   });
 });

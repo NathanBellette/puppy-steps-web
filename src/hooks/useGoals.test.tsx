@@ -1,122 +1,48 @@
-import { renderHook, waitFor, act } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import React from 'react';
+import { act } from '@testing-library/react';
 import { useGoals, useGoalStats } from './useGoals';
-import { Goal } from '@/types';
+import { getUserGoals, createGoal, updateGoal, deleteGoal, createGoalsBatch } from '@/lib/firestore';
+import { makeGoal } from '@/test/fixtures';
+import { renderLoadedHook } from '@/test/utils';
 
-// --- Mocks ---
+vi.mock('./useAuth');
+vi.mock('@/lib/firestore');
 
-const mockUser = { uid: 'user-1', email: 'test@test.com', displayName: 'Test' };
-
-vi.mock('./useAuth', () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
-
-const mockGoals: Goal[] = [
-  {
-    id: 'goal-1',
-    userId: 'user-1',
-    dogId: 'dog-1',
-    category: 'Men',
-    type: 'people',
-    calmTargetCount: 5,
-    varietyTargetCount: 3,
-    targetCount: 5,
-    currentCount: 3,
-    isCompleted: false,
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
-  },
-  {
+const mockGoals = [
+  makeGoal({ currentCount: 3 }),
+  makeGoal({
     id: 'goal-2',
-    userId: 'user-1',
-    dogId: 'dog-1',
     category: 'Small Dogs',
     type: 'dogs',
-    calmTargetCount: 5,
-    varietyTargetCount: 3,
-    targetCount: 5,
     currentCount: 5,
     isCompleted: true,
     completedDate: new Date('2024-02-01'),
-    createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-02-01'),
-  },
+  }),
 ];
 
-const mockGetUserGoals = vi.fn().mockResolvedValue(mockGoals);
-const mockCreateGoal = vi.fn().mockResolvedValue('goal-3');
-const mockUpdateGoal = vi.fn().mockResolvedValue(undefined);
-const mockDeleteGoal = vi.fn().mockResolvedValue(undefined);
-const mockCreateGoalsBatch = vi.fn().mockResolvedValue(undefined);
-
-vi.mock('@/lib/firestore', () => ({
-  getUserGoals: (...args: unknown[]) => mockGetUserGoals(...args),
-  createGoal: (...args: unknown[]) => mockCreateGoal(...args),
-  updateGoal: (...args: unknown[]) => mockUpdateGoal(...args),
-  deleteGoal: (...args: unknown[]) => mockDeleteGoal(...args),
-  createGoalsBatch: (...args: unknown[]) => mockCreateGoalsBatch(...args),
-}));
-
-// --- Helpers ---
-
-function createWrapper() {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
-  return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
-}
-
-// --- Tests ---
+const renderGoals = async () => (await renderLoadedHook(() => useGoals('dog-1'))).result;
 
 describe('useGoals', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetUserGoals.mockResolvedValue(mockGoals);
+    vi.mocked(getUserGoals).mockResolvedValue(mockGoals);
   });
 
-  it('fetches goals for the authenticated user', async () => {
-    const { result } = renderHook(() => useGoals('dog-1'), {
-      wrapper: createWrapper(),
-    });
+  it.each([
+    { scenario: 'fetches goals for the authenticated user', goals: mockGoals },
+    { scenario: 'returns empty array when no goals exist', goals: [] },
+  ])('$scenario', async ({ goals }) => {
+    vi.mocked(getUserGoals).mockResolvedValue(goals);
 
-    expect(result.current.isLoading).toBe(true);
+    const { result, initiallyLoading } = await renderLoadedHook(() => useGoals('dog-1'));
 
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(mockGetUserGoals).toHaveBeenCalledWith('user-1', 'dog-1');
-    expect(result.current.goals).toEqual(mockGoals);
-  });
-
-  it('returns empty array when no goals exist', async () => {
-    mockGetUserGoals.mockResolvedValue([]);
-
-    const { result } = renderHook(() => useGoals('dog-1'), {
-      wrapper: createWrapper(),
-    });
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(result.current.goals).toEqual([]);
+    expect(initiallyLoading).toBe(true);
+    expect(getUserGoals).toHaveBeenCalledWith('user-1', 'dog-1');
+    expect(result.current.goals).toEqual(goals);
   });
 
   it('createGoal calls firestore with correct data', async () => {
-    const { result } = renderHook(() => useGoals('dog-1'), {
-      wrapper: createWrapper(),
-    });
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
+    const result = await renderGoals();
 
     await act(async () => {
       await result.current.createGoal({
@@ -128,7 +54,7 @@ describe('useGoals', () => {
       });
     });
 
-    expect(mockCreateGoal).toHaveBeenCalledWith(
+    expect(createGoal).toHaveBeenCalledWith(
       expect.objectContaining({
         dogId: 'dog-1',
         category: 'Women',
@@ -142,122 +68,60 @@ describe('useGoals', () => {
     );
   });
 
-  it('toggleGoal marks goal as completed', async () => {
-    const { result } = renderHook(() => useGoals('dog-1'), {
-      wrapper: createWrapper(),
-    });
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
+  it.each([
+    { id: 'goal-1', isCompleted: true, completedDate: expect.any(Date), state: 'completed' },
+    { id: 'goal-2', isCompleted: false, completedDate: undefined, state: 'uncompleted' },
+  ])('toggleGoal marks goal as $state', async ({ id, isCompleted, completedDate }) => {
+    const result = await renderGoals();
 
     await act(async () => {
-      await result.current.toggleGoal({ id: 'goal-1', isCompleted: true });
+      await result.current.toggleGoal({ id, isCompleted });
     });
 
-    expect(mockUpdateGoal).toHaveBeenCalledWith(
-      'goal-1',
-      expect.objectContaining({
-        isCompleted: true,
-        completedDate: expect.any(Date),
-      })
-    );
-  });
-
-  it('toggleGoal marks goal as uncompleted', async () => {
-    const { result } = renderHook(() => useGoals('dog-1'), {
-      wrapper: createWrapper(),
-    });
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    await act(async () => {
-      await result.current.toggleGoal({ id: 'goal-2', isCompleted: false });
-    });
-
-    expect(mockUpdateGoal).toHaveBeenCalledWith(
-      'goal-2',
-      expect.objectContaining({
-        isCompleted: false,
-        completedDate: undefined,
-      })
-    );
+    expect(updateGoal).toHaveBeenCalledWith(id, expect.objectContaining({ isCompleted, completedDate }));
   });
 
   it('initializeGoals creates batch of predefined goals', async () => {
-    const { result } = renderHook(() => useGoals('dog-1'), {
-      wrapper: createWrapper(),
-    });
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
+    const result = await renderGoals();
 
     await act(async () => {
       await result.current.initializeGoals('dog-1');
     });
 
-    expect(mockCreateGoalsBatch).toHaveBeenCalledWith(
+    expect(createGoalsBatch).toHaveBeenCalledWith(
       expect.arrayContaining([
         expect.objectContaining({ category: 'Men', type: 'people', dogId: 'dog-1', userId: 'user-1' }),
         expect.objectContaining({ category: 'Small Dogs', type: 'dogs' }),
       ])
     );
     // 28 predefined goals (6 people + 5 dogs + 8 environments + 9 noises)
-    expect(mockCreateGoalsBatch.mock.calls[0][0]).toHaveLength(28);
+    expect(vi.mocked(createGoalsBatch).mock.calls[0][0]).toHaveLength(28);
   });
 
   it('deleteGoal calls firestore with correct id', async () => {
-    const { result } = renderHook(() => useGoals('dog-1'), {
-      wrapper: createWrapper(),
-    });
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
+    const result = await renderGoals();
 
     await act(async () => {
       await result.current.deleteGoal('goal-1');
     });
 
-    expect(mockDeleteGoal.mock.calls[0][0]).toBe('goal-1');
+    expect(vi.mocked(deleteGoal).mock.calls[0][0]).toBe('goal-1');
   });
 });
 
 describe('useGoalStats', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetUserGoals.mockResolvedValue(mockGoals);
   });
 
-  it('derives stats from goal data', async () => {
-    const { result } = renderHook(() => useGoalStats('dog-1'), {
-      wrapper: createWrapper(),
-    });
+  it.each([
+    { goals: mockGoals, totalGoals: 2, completedGoals: 1, scenario: 'derives stats from goal data' },
+    { goals: [], totalGoals: 0, completedGoals: 0, scenario: 'returns zero stats when no goals' },
+  ])('$scenario', async ({ goals, totalGoals, completedGoals }) => {
+    vi.mocked(getUserGoals).mockResolvedValue(goals);
 
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
+    const { result } = await renderLoadedHook(() => useGoalStats('dog-1'));
 
-    expect(result.current.stats).toBeDefined();
-    expect(result.current.stats.totalGoals).toBe(2);
-    expect(result.current.stats.completedGoals).toBe(1);
-  });
-
-  it('returns zero stats when no goals', async () => {
-    mockGetUserGoals.mockResolvedValue([]);
-
-    const { result } = renderHook(() => useGoalStats('dog-1'), {
-      wrapper: createWrapper(),
-    });
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(result.current.stats.totalGoals).toBe(0);
-    expect(result.current.stats.completedGoals).toBe(0);
+    expect(result.current.stats).toMatchObject({ totalGoals, completedGoals });
   });
 });
