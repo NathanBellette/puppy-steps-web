@@ -37,7 +37,7 @@ jobs:
           has_label() { printf ',%s,' "$LABELS" | grep -q ",$1,"; }
 
           numstat="$(git diff --numstat "$BASE_SHA...$HEAD_SHA")"
-          lines=0; files=0; areas=""; paths=""
+          lines=0; files=0; snaps=0; areas=""; paths=""
           while IFS=$'\t' read -r add del path; do
             [ -n "$path" ] || continue
             path="$(printf '%s' "$path" | sed -E 's/\{[^}]* => ([^}]*)\}/\1/; s/^.* => //; s#//#/#g')"
@@ -46,6 +46,7 @@ jobs:
             case "$path" in
               docs/architecture.md|*package-lock.json|*pnpm-lock.yaml|*yarn.lock|*uv.lock|*poetry.lock|*Podfile.lock|*pubspec.lock|*Package.resolved|*Cargo.lock|*.lock) continue ;;
               *.g.dart|*.freezed.dart|*.gen.dart|*.generated.*|*.min.js|*.snap) continue ;;
+              */__screenshots__/*|__screenshots__/*|*/__snapshots__/*|__snapshots__/*|*/__Snapshots__/*|*-snapshots/*|*/goldens/*|*/golden/*) snaps=$((snaps + 1)); continue ;;
             esac
             files=$((files + 1))
             [ "$add" = "-" ] && add=0
@@ -70,7 +71,7 @@ jobs:
           {
             echo "### PR focus"
             echo "- Size: **size/$size** ($lines changed lines, $files files, $area_count code areas:${areas:- none})"
-            echo "- Excluded from counts: lockfiles, generated files, docs/architecture.md"
+            echo "- Excluded from counts: lockfiles, generated files, docs/architecture.md, snapshot images ($snaps changed)"
           } >> "$summary"
 
           # Label (best effort: fork PRs get a read-only token)
@@ -91,7 +92,7 @@ jobs:
           fi
 
           # Architecture drift
-          signal="$(printf '%s\n' "$paths" | grep -E '(^|/)(render\.yaml|Dockerfile[^/]*|docker-compose[^/]*\.ya?ml|firebase\.json|firestore\.rules|storage\.rules)$|(^|/)supabase/(config\.toml|migrations/|functions/)|(^|/)(routers|routes)/' | head -5)"
+          signal="$(printf '%s\n' "$paths" | grep -E '(^|/)(render\.yaml|Dockerfile[^/]*|docker-compose[^/]*\.ya?ml|firebase\.json|firestore\.rules|storage\.rules)$|(^|/)supabase/(config\.toml|migrations/|functions/)|(^|/)(routers|routes)/.*\.py$' | head -5)"
           if [ -n "$signal" ] && ! printf '%s\n' "$paths" | grep -qx 'docs/architecture.md' && ! has_label no-architecture-change; then
             echo "::warning title=Architecture doc not updated::Architecture-relevant files changed ($(printf '%s' "$signal" | tr '\n' ' ')) but docs/architecture.md did not. Update it, or add the no-architecture-change label."
             echo "- Architecture drift: signal files changed without docs/architecture.md" >> "$summary"
