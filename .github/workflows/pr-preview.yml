@@ -2,6 +2,11 @@ name: PR preview
 
 # Deploys each pull request to a Firebase Hosting preview channel (pr<number>-<branch>) and
 # comments the URL on the PR. Same-repo PRs only: forks and Dependabot do not get the secrets.
+#
+# Two jobs, so code from the PR and its dependencies never runs next to the deploy credential:
+#   build   runs npm and the Vite build; it sees only the public VITE_FIREBASE_* values.
+#   preview downloads the built files and runs the deploy action; it runs no project code
+#           (it checks out only firebase.json and .firebaserc).
 
 on:
   pull_request:
@@ -12,19 +17,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  preview:
-    name: Build & preview
+  build:
+    name: Build
     if: github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
 
     permissions:
       contents: read
-      pull-requests: write
-      checks: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -33,7 +38,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Build application
         run: npm run build
@@ -45,10 +50,46 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
 
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-dist
+          path: dist
+          retention-days: 1
+          if-no-files-found: error
+
+  preview:
+    name: Preview
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+
+    steps:
+      - name: Checkout Firebase config only
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            firebase.json
+            .firebaserc
+          sparse-checkout-cone-mode: false
+
+      - name: Download build
+        uses: actions/download-artifact@v4
+        with:
+          name: preview-dist
+          path: dist
+
       - name: Deploy to a Firebase Hosting preview channel
-        uses: FirebaseExtended/action-hosting-deploy@v0
+        # Pinned to the commit behind the v0 tag; update it deliberately.
+        uses: FirebaseExtended/action-hosting-deploy@500ac625ca2dd40cbd15f7659af953801858032a # v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           projectId: puppysteps-88615
+          firebaseToolsVersion: 15.36.0
           expires: 7d
