@@ -1,0 +1,142 @@
+name: PR guard
+
+# Warn-only checks for focused PRs and a living architecture doc, plus Mermaid validation.
+# Thresholds mirror ~/.claude/hooks/pr-guard. Labels: pr-guard-override, no-architecture-change.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: pr-guard-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  focus:
+    name: Focus and architecture drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check size, scope and architecture drift
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: |
+          # Warn-only checks: PR size and scope, and architecture drift. Never fails the job.
+          # Thresholds match ~/.claude/hooks/pr-guard.
+          MAX_LINES=400; MAX_FILES=15; MAX_AREAS=2
+          has_label() { printf ',%s,' "$LABELS" | grep -q ",$1,"; }
+
+          numstat="$(git diff --numstat "$BASE_SHA...$HEAD_SHA")"
+          lines=0; files=0; areas=""; paths=""
+          while IFS=$'\t' read -r add del path; do
+            [ -n "$path" ] || continue
+            path="$(printf '%s' "$path" | sed -E 's/\{[^}]* => ([^}]*)\}/\1/; s/^.* => //; s#//#/#g')"
+            paths="$paths
+          $path"
+            case "$path" in
+              docs/architecture.md|*package-lock.json|*pnpm-lock.yaml|*yarn.lock|*uv.lock|*poetry.lock|*Podfile.lock|*pubspec.lock|*Package.resolved|*Cargo.lock|*.lock) continue ;;
+              *.g.dart|*.freezed.dart|*.gen.dart|*.generated.*|*.min.js|*.snap) continue ;;
+            esac
+            files=$((files + 1))
+            [ "$add" = "-" ] && add=0
+            [ "$del" = "-" ] && del=0
+            lines=$((lines + add + del))
+            top="${path%%/*}"
+            [ "$top" = "$path" ] && continue
+            case "$top" in test|tests|__tests__|e2e|spec|docs|.github|.claude) continue ;; esac
+            case " $areas " in *" $top "*) ;; *) areas="$areas $top" ;; esac
+          done <<NUMSTAT
+          $numstat
+          NUMSTAT
+          area_count=$(printf '%s' "$areas" | wc -w | tr -d ' ')
+
+          if   [ "$lines" -le 20 ];  then size=XS
+          elif [ "$lines" -le 100 ]; then size=S
+          elif [ "$lines" -le 250 ]; then size=M
+          elif [ "$lines" -le 400 ]; then size=L
+          else size=XL; fi
+
+          summary="${GITHUB_STEP_SUMMARY:-/dev/null}"
+          {
+            echo "### PR focus"
+            echo "- Size: **size/$size** ($lines changed lines, $files files, $area_count code areas:${areas:- none})"
+            echo "- Excluded from counts: lockfiles, generated files, docs/architecture.md"
+          } >> "$summary"
+
+          # Label (best effort: fork PRs get a read-only token)
+          if [ -n "${PR_NUMBER:-}" ] && command -v gh >/dev/null 2>&1; then
+            gh label create "size/$size" --color ededed --description "PR size" >/dev/null 2>&1 || true
+            for l in XS S M L XL; do
+              if [ "$l" != "$size" ] && has_label "size/$l"; then
+                gh pr edit "$PR_NUMBER" --remove-label "size/$l" >/dev/null 2>&1 || true
+              fi
+            done
+            gh pr edit "$PR_NUMBER" --add-label "size/$size" >/dev/null 2>&1 || echo "::notice::Could not apply size label (read-only token?)"
+          fi
+
+          if ! has_label pr-guard-override; then
+            [ "$lines" -gt "$MAX_LINES" ] && echo "::warning title=Large PR::$lines changed lines (limit $MAX_LINES). Split it, or add the pr-guard-override label and explain in Risks / rollout."
+            [ "$files" -gt "$MAX_FILES" ] && echo "::warning title=Many files::$files changed files (limit $MAX_FILES). Split it, or add the pr-guard-override label and explain in Risks / rollout."
+            [ "$area_count" -gt "$MAX_AREAS" ] && echo "::warning title=Mixed concerns::$area_count top-level areas touched ($areas; limit $MAX_AREAS). One concern per PR."
+          fi
+
+          # Architecture drift
+          signal="$(printf '%s\n' "$paths" | grep -E '(^|/)(render\.yaml|Dockerfile[^/]*|docker-compose[^/]*\.ya?ml|firebase\.json|firestore\.rules|storage\.rules)$|(^|/)supabase/(config\.toml|migrations/|functions/)|(^|/)(routers|routes)/' | head -5)"
+          if [ -n "$signal" ] && ! printf '%s\n' "$paths" | grep -qx 'docs/architecture.md' && ! has_label no-architecture-change; then
+            echo "::warning title=Architecture doc not updated::Architecture-relevant files changed ($(printf '%s' "$signal" | tr '\n' ' ')) but docs/architecture.md did not. Update it, or add the no-architecture-change label."
+            echo "- Architecture drift: signal files changed without docs/architecture.md" >> "$summary"
+          fi
+          exit 0
+
+  mermaid:
+    name: Validate architecture diagrams
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Detect architecture doc change
+        id: changed
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if git diff --name-only "$BASE_SHA...$HEAD_SHA" | grep -qx 'docs/architecture.md'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Render Mermaid blocks
+        if: steps.changed.outputs.run == 'true'
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: "true"
+          MMDC_VERSION: "11.4.2"
+        run: |
+          # Render every mermaid block in docs/architecture.md; fail the job if one does not render.
+          work="$(mktemp -d)"
+          printf '{"executablePath":"%s","args":["--no-sandbox","--disable-setuid-sandbox"]}' "$(command -v google-chrome || command -v chromium || command -v chromium-browser)" > "$work/puppeteer.json"
+          awk -v dir="$work" '
+            /^```mermaid[[:space:]]*$/ { n++; inblock=1; next }
+            /^```[[:space:]]*$/ && inblock { inblock=0; next }
+            inblock { print > (dir "/block-" n ".mmd") }
+          ' docs/architecture.md
+          count=$(find "$work" -name 'block-*.mmd' | wc -l | tr -d ' ')
+          if [ "$count" -eq 0 ]; then echo "::error file=docs/architecture.md::No mermaid blocks found"; exit 1; fi
+          status=0
+          for f in "$work"/block-*.mmd; do
+            n=$(basename "$f" .mmd | sed 's/block-//')
+            if out=$(npx --yes "@mermaid-js/mermaid-cli@${MMDC_VERSION}" -p "$work/puppeteer.json" -i "$f" -o "$work/out-$n.svg" -q 2>&1); then
+              echo "block $n OK"
+            else
+              echo "::error file=docs/architecture.md::Mermaid block $n does not render"; echo "$out" | tail -8; status=1
+            fi
+          done
+          exit "$status"
