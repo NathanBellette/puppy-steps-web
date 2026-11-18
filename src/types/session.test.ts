@@ -1,40 +1,21 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeSessionType } from '@/types/session';
+import { normalizeSessionType, SessionType } from '@/types/session';
+import { capitalizeFirst } from '@/lib/utils';
 
 describe('normalizeSessionType', () => {
-  it('passes through lowercase types unchanged', () => {
-    expect(normalizeSessionType('people')).toBe('people');
-    expect(normalizeSessionType('dogs')).toBe('dogs');
-    expect(normalizeSessionType('environments')).toBe('environments');
-    expect(normalizeSessionType('noises')).toBe('noises');
+  it.each<{ type: SessionType; legacy: string }>([
+    { type: 'people', legacy: 'person' },
+    { type: 'dogs', legacy: 'dog' },
+    { type: 'environments', legacy: 'environment' },
+    { type: 'noises', legacy: 'noise' },
+  ])('normalizes any casing of $type and legacy singular $legacy', ({ type, legacy }) => {
+    // Lowercase passes through; capitalized and all-caps values come from iOS
+    const spellings = [type, legacy].flatMap((word) => [word, capitalizeFirst(word), word.toUpperCase()]);
+
+    expect(spellings.map(normalizeSessionType)).toEqual(spellings.map(() => type));
   });
 
-  it('normalizes capitalized types from iOS', () => {
-    expect(normalizeSessionType('People')).toBe('people');
-    expect(normalizeSessionType('Dogs')).toBe('dogs');
-    expect(normalizeSessionType('Environments')).toBe('environments');
-    expect(normalizeSessionType('Noises')).toBe('noises');
-  });
-
-  it('normalizes all-caps types', () => {
-    expect(normalizeSessionType('PEOPLE')).toBe('people');
-    expect(normalizeSessionType('DOGS')).toBe('dogs');
-  });
-
-  it('handles legacy singular types', () => {
-    expect(normalizeSessionType('person')).toBe('people');
-    expect(normalizeSessionType('dog')).toBe('dogs');
-    expect(normalizeSessionType('environment')).toBe('environments');
-    expect(normalizeSessionType('noise')).toBe('noises');
-  });
-
-  it('handles legacy singular types with capitalization', () => {
-    expect(normalizeSessionType('Person')).toBe('people');
-    expect(normalizeSessionType('Dog')).toBe('dogs');
-  });
-
-  it('defaults to people for unknown types', () => {
-    expect(normalizeSessionType('unknown')).toBe('people');
-    expect(normalizeSessionType('')).toBe('people');
+  it.each(['unknown', ''])('defaults %j to people', (input) => {
+    expect(normalizeSessionType(input)).toBe('people');
   });
 });

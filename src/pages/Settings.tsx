@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { DogAvatar } from '@/components/ui/DogAvatar';
-import { Modal } from '@/components/ui/Modal';
+import { formatDogDetails } from '@/lib/utils';
 import { AddDogModal } from '@/components/AddDogModal';
+import { ConfirmDeleteModal } from '@/components/ConfirmDeleteModal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SettingsListItem } from '@/components/ui/SettingsListItem';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { useAuth } from '@/hooks/useAuth';
 import { useDogs } from '@/hooks/useDogProfile';
 import { 
@@ -77,14 +79,7 @@ export const Settings = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-          Settings
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400">
-          Manage your account and application preferences
-        </p>
-      </div>
+      <PageHeader title="Settings" description="Manage your account and application preferences" />
 
       {/* Account Section */}
       <Card>
@@ -136,7 +131,7 @@ export const Settings = () => {
                         {dog.name}
                       </p>
                       <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {dog.breed} • {dog.age} months old
+                        {formatDogDetails(dog)}
                       </p>
                     </div>
                   </div>
@@ -243,34 +238,13 @@ export const Settings = () => {
         onClose={() => setShowAddDogModal(false)}
       />
 
-      {/* Delete Confirmation Modal */}
-      <Modal
+      <ConfirmDeleteModal
         isOpen={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
         title="Delete Dog"
-      >
-        <div className="space-y-4">
-          <p className="text-slate-600 dark:text-slate-400">
-            Are you sure you want to delete this dog? This action cannot be undone and will also delete all associated socialisation sessions.
-          </p>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteConfirm(false)}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={confirmDeleteDog}
-              className="flex-1"
-            >
-              Delete
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        message="Are you sure you want to delete this dog? This action cannot be undone and will also delete all associated socialisation sessions."
+        onCancel={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDeleteDog}
+      />
     </div>
   );
 };

@@ -1,0 +1,4 @@
+# deslop configuration (https://deslop.live/docs/for-ai/)
+# `deslop` exits 3 when duplication exceeds this percentage.
+[threshold]
+max_duplication_percent = 0

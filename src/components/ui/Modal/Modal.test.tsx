@@ -1,15 +1,24 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { 
-  Modal, 
-  ModalHeader, 
-  ModalContent, 
-  ModalFooter, 
-  ModalTitle 
+import {
+  Modal,
+  ModalHeader,
+  ModalContent,
+  ModalFooter,
+  ModalTitle,
+  ModalProps,
 } from './Modal';
+import { clickButton, expectAttributes, expectButtons, expectTexts, itAcceptsClassNameAndRef, itRendersChildren } from '@/test/utils';
 
 describe('Modal Components', () => {
   const mockOnClose = vi.fn();
+
+  const renderModal = (props: Partial<ModalProps> = {}) =>
+    render(
+      <Modal isOpen={true} onClose={mockOnClose} data-testid="modal" {...props}>
+        <div>Modal content</div>
+      </Modal>
+    );
 
   beforeEach(() => {
     mockOnClose.mockClear();
@@ -17,168 +26,58 @@ describe('Modal Components', () => {
 
   describe('Modal', () => {
     it('renders when isOpen is true', () => {
-      render(
-        <Modal isOpen={true} onClose={mockOnClose} data-testid="modal">
-          <div>Modal content</div>
-        </Modal>
-      );
-      
+      renderModal();
+
       expect(screen.getByTestId('modal')).toBeInTheDocument();
-      expect(screen.getByText('Modal content')).toBeInTheDocument();
+      expectTexts('Modal content');
     });
 
     it('does not render when isOpen is false', () => {
-      render(
-        <Modal isOpen={false} onClose={mockOnClose} data-testid="modal">
-          <div>Modal content</div>
-        </Modal>
-      );
-      
+      renderModal({ isOpen: false });
+
       expect(screen.queryByTestId('modal')).not.toBeInTheDocument();
     });
 
-    it('accepts different sizes without crashing', () => {
-      const { rerender } = render(
-        <Modal isOpen={true} onClose={mockOnClose} size="sm" data-testid="modal">
-          Content
-        </Modal>
-      );
-      expect(screen.getByTestId('modal')).toBeInTheDocument();
+    it.each(['sm', 'lg', 'xl'] as const)('accepts size %s without crashing', (size) => {
+      renderModal({ size });
 
-      rerender(
-        <Modal isOpen={true} onClose={mockOnClose} size="lg" data-testid="modal">
-          Content
-        </Modal>
-      );
-      expect(screen.getByTestId('modal')).toBeInTheDocument();
-
-      rerender(
-        <Modal isOpen={true} onClose={mockOnClose} size="xl" data-testid="modal">
-          Content
-        </Modal>
-      );
       expect(screen.getByTestId('modal')).toBeInTheDocument();
     });
 
     it('calls onClose when backdrop is clicked', async () => {
-      const user = userEvent.setup();
-      render(
-        <Modal isOpen={true} onClose={mockOnClose} data-testid="modal">
-          Content
-        </Modal>
-      );
-      
+      renderModal();
+
       const backdrop = screen.getByTestId('modal').parentElement?.querySelector('[aria-hidden="true"]');
-      await user.click(backdrop!);
+      await userEvent.setup().click(backdrop!);
+
       expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
 
     it('calls onClose when Escape key is pressed', async () => {
-      const user = userEvent.setup();
-      render(
-        <Modal isOpen={true} onClose={mockOnClose} data-testid="modal">
-          Content
-        </Modal>
-      );
-      
-      await user.keyboard('{Escape}');
+      renderModal();
+
+      await userEvent.setup().keyboard('{Escape}');
+
       expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
 
     it('has proper accessibility attributes', () => {
-      render(
-        <Modal isOpen={true} onClose={mockOnClose} data-testid="modal">
-          Content
-        </Modal>
-      );
-      
-      const modal = screen.getByTestId('modal');
-      expect(modal).toHaveAttribute('role', 'dialog');
-      expect(modal).toHaveAttribute('aria-modal', 'true');
+      renderModal();
+
+      expectAttributes(screen.getByTestId('modal'), { role: 'dialog', 'aria-modal': 'true' });
     });
 
-    it('applies custom className', () => {
-      render(
-        <Modal isOpen={true} onClose={mockOnClose} className="custom-class" data-testid="modal">
-          Content
-        </Modal>
-      );
-      expect(screen.getByTestId('modal')).toHaveClass('custom-class');
-    });
-
-    it('forwards ref correctly', () => {
-      const ref = vi.fn();
-      render(
-        <Modal isOpen={true} onClose={mockOnClose} ref={ref} data-testid="modal">
-          Content
-        </Modal>
-      );
-      expect(ref).toHaveBeenCalled();
-    });
+    itAcceptsClassNameAndRef((props) => <Modal isOpen={true} onClose={mockOnClose} data-testid="modal" {...props} />, 'modal');
   });
 
-  describe('ModalHeader', () => {
-    it('renders with children', () => {
-      render(
-        <ModalHeader data-testid="header">
-          <span>Header content</span>
-        </ModalHeader>
-      );
-      expect(screen.getByText('Header content')).toBeInTheDocument();
-    });
+  itRendersChildren({ ModalHeader, ModalContent, ModalTitle, ModalFooter }, { ModalTitle: 'H2' });
 
-    it('renders close button when onClose is provided', () => {
-      render(
-        <ModalHeader onClose={mockOnClose} data-testid="header">
-          Header
-        </ModalHeader>
-      );
-      expect(screen.getByRole('button', { name: /close/i })).toBeInTheDocument();
-    });
+  it('ModalHeader renders a close button that calls onClose', async () => {
+    render(<ModalHeader onClose={mockOnClose}>Header</ModalHeader>);
 
-    it('calls onClose when close button is clicked', async () => {
-      const user = userEvent.setup();
-      render(
-        <ModalHeader onClose={mockOnClose} data-testid="header">
-          Header
-        </ModalHeader>
-      );
-      
-      await user.click(screen.getByRole('button', { name: /close/i }));
-      expect(mockOnClose).toHaveBeenCalledTimes(1);
-    });
-  });
+    await clickButton(/close/i);
 
-  describe('ModalContent', () => {
-    it('renders children', () => {
-      render(
-        <ModalContent data-testid="content">
-          <p>Modal content here</p>
-        </ModalContent>
-      );
-      expect(screen.getByText('Modal content here')).toBeInTheDocument();
-    });
-  });
-
-  describe('ModalFooter', () => {
-    it('renders children', () => {
-      render(
-        <ModalFooter data-testid="footer">
-          <button>Cancel</button>
-          <button>Save</button>
-        </ModalFooter>
-      );
-      expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
-    });
-  });
-
-  describe('ModalTitle', () => {
-    it('renders as h2 element', () => {
-      render(<ModalTitle>Modal Title</ModalTitle>);
-      const title = screen.getByText('Modal Title');
-      expect(title.tagName).toBe('H2');
-    });
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
   describe('Complete Modal Structure', () => {
@@ -199,10 +98,8 @@ describe('Modal Components', () => {
       );
 
       expect(screen.getByTestId('modal')).toBeInTheDocument();
-      expect(screen.getByText('Test Modal')).toBeInTheDocument();
-      expect(screen.getByText('This is the modal content.')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+      expectTexts('Test Modal', 'This is the modal content.');
+      expectButtons(/cancel/i, /save/i);
     });
   });
 });

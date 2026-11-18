@@ -1,146 +1,79 @@
 import { render, screen } from '@testing-library/react';
-import { Progress, CircularProgress } from './Progress';
+import { Progress, CircularProgress, CircularProgressProps } from './Progress';
+import { expectAttributes, expectTexts, itAcceptsClassNameAndRef } from '@/test/utils';
 
 describe('Progress Components', () => {
-  describe('Progress', () => {
+  describe.each([
+    {
+      name: 'Progress',
+      ProgressComponent: Progress,
+      testId: 'progress',
+      // The bar slides left by the unfilled share
+      expectPercentage: (percent: number) =>
+        expect(screen.getByTestId('progress').querySelector('div')).toHaveStyle(`transform: translateX(-${100 - percent}%)`),
+    },
+    {
+      name: 'CircularProgress',
+      ProgressComponent: CircularProgress,
+      testId: 'circular-progress',
+      expectPercentage: (percent: number) => expectTexts(`${percent}%`),
+    },
+  ])('$name', ({ ProgressComponent, testId, expectPercentage }) => {
     it('renders without crashing', () => {
-      render(<Progress value={50} data-testid="progress" />);
-      expect(screen.getByTestId('progress')).toBeInTheDocument();
-    });
-
-    it('renders with correct percentage for value', () => {
-      render(<Progress value={75} data-testid="progress" />);
-      const progressBar = screen.getByTestId('progress').querySelector('div');
-      expect(progressBar).toHaveStyle('transform: translateX(-25%)');
-    });
-
-    it('handles different max values', () => {
-      render(<Progress value={25} max={50} data-testid="progress" />);
-      const progressBar = screen.getByTestId('progress').querySelector('div');
-      expect(progressBar).toHaveStyle('transform: translateX(-50%)');
-    });
-
-    it('clamps value to 0-100% range', () => {
-      const { rerender } = render(<Progress value={-10} data-testid="progress" />);
-      let progressBar = screen.getByTestId('progress').querySelector('div');
-      expect(progressBar).toHaveStyle('transform: translateX(-100%)');
-
-      rerender(<Progress value={150} data-testid="progress" />);
-      progressBar = screen.getByTestId('progress').querySelector('div');
-      expect(progressBar).toHaveStyle('transform: translateX(-0%)');
-    });
-
-    it('defaults to max of 100', () => {
-      render(<Progress value={50} data-testid="progress" />);
-      const progressBar = screen.getByTestId('progress').querySelector('div');
-      expect(progressBar).toHaveStyle('transform: translateX(-50%)');
-    });
-
-    it('applies custom className', () => {
-      render(<Progress value={50} className="custom-class" data-testid="progress" />);
-      expect(screen.getByTestId('progress')).toHaveClass('custom-class');
-    });
-
-    it('forwards ref correctly', () => {
-      const ref = vi.fn();
-      render(<Progress value={50} ref={ref} data-testid="progress" />);
-      expect(ref).toHaveBeenCalled();
+      render(<ProgressComponent value={50} data-testid={testId} />);
+      expect(screen.getByTestId(testId)).toBeInTheDocument();
     });
 
     it('supports accessibility attributes', () => {
-      render(<Progress value={50} role="progressbar" aria-valuenow={50} aria-valuemax={100} data-testid="progress" />);
-      const progress = screen.getByTestId('progress');
-      expect(progress).toHaveAttribute('role', 'progressbar');
-      expect(progress).toHaveAttribute('aria-valuenow', '50');
-      expect(progress).toHaveAttribute('aria-valuemax', '100');
+      render(<ProgressComponent value={50} role="progressbar" aria-valuenow={50} aria-valuemax={100} data-testid={testId} />);
+      expectAttributes(screen.getByTestId(testId), { role: 'progressbar', 'aria-valuenow': '50', 'aria-valuemax': '100' });
     });
+
+    it.each([
+      { scenario: 'defaults to max of 100', value: 50, max: undefined, percent: 50 },
+      { scenario: 'shows the percentage for the value', value: 75, max: undefined, percent: 75 },
+      { scenario: 'handles different max values', value: 25, max: 50, percent: 50 },
+      // Values outside 0-100% are clamped
+      { scenario: 'clamps negative values to 0%', value: -10, max: undefined, percent: 0 },
+      { scenario: 'clamps values above max to 100%', value: 150, max: undefined, percent: 100 },
+    ])('$scenario', ({ value, max, percent }) => {
+      render(<ProgressComponent value={value} max={max} data-testid={testId} />);
+      expectPercentage(percent);
+    });
+
+    itAcceptsClassNameAndRef((props) => <ProgressComponent value={50} data-testid={testId} {...props} />, testId);
   });
 
   describe('CircularProgress', () => {
-    it('renders without crashing', () => {
-      render(<CircularProgress value={50} data-testid="circular-progress" />);
-      expect(screen.getByTestId('circular-progress')).toBeInTheDocument();
-    });
+    const renderCircular = (props: Partial<CircularProgressProps>) => {
+      render(<CircularProgress value={50} data-testid="circular-progress" {...props} />);
+      return screen.getByTestId('circular-progress');
+    };
 
     it('renders with correct explicit size', () => {
-      render(<CircularProgress value={50} size={100} data-testid="circular-progress" />);
-      expect(screen.getByTestId('circular-progress')).toHaveStyle('width: 100px; height: 100px');
+      expect(renderCircular({ size: 100 })).toHaveStyle('width: 100px; height: 100px');
     });
 
-    it('shows percentage text by default', () => {
-      render(<CircularProgress value={75} data-testid="circular-progress" />);
-      expect(screen.getByText('75%')).toBeInTheDocument();
+    it('rounds percentage to nearest integer', () => {
+      renderCircular({ value: 33.7 });
+      expectTexts('34%');
     });
 
     it('hides percentage text when showPercentage is false', () => {
-      render(<CircularProgress value={75} showPercentage={false} data-testid="circular-progress" />);
+      renderCircular({ value: 75, showPercentage: false });
       expect(screen.queryByText('75%')).not.toBeInTheDocument();
     });
 
     it('renders SVG with correct dimensions', () => {
-      render(<CircularProgress value={50} size={120} data-testid="circular-progress" />);
-      const svg = screen.getByTestId('circular-progress').querySelector('svg');
-      expect(svg).toHaveAttribute('width', '120');
-      expect(svg).toHaveAttribute('height', '120');
+      expectAttributes(renderCircular({ size: 120 }).querySelector('svg'), { width: '120', height: '120' });
     });
 
-    it('renders background and progress circles', () => {
-      render(<CircularProgress value={50} data-testid="circular-progress" />);
-      const circles = screen.getByTestId('circular-progress').querySelectorAll('circle');
+    it('renders background and progress circles with the given stroke width', () => {
+      const circles = renderCircular({ strokeWidth: 12 }).querySelectorAll('circle');
       expect(circles).toHaveLength(2);
-    });
-
-    it('handles different stroke widths', () => {
-      render(<CircularProgress value={50} strokeWidth={12} data-testid="circular-progress" />);
-      const circles = screen.getByTestId('circular-progress').querySelectorAll('circle');
-      circles.forEach(circle => {
+      circles.forEach((circle) => {
         expect(circle).toHaveAttribute('stroke-width', '12');
       });
-    });
-
-    it('clamps value to 0-100% range', () => {
-      const { rerender } = render(<CircularProgress value={-10} data-testid="circular-progress" />);
-      expect(screen.getByText('0%')).toBeInTheDocument();
-
-      rerender(<CircularProgress value={150} data-testid="circular-progress" />);
-      expect(screen.getByText('100%')).toBeInTheDocument();
-    });
-
-    it('handles different max values', () => {
-      render(<CircularProgress value={25} max={50} data-testid="circular-progress" />);
-      expect(screen.getByText('50%')).toBeInTheDocument();
-    });
-
-    it('applies custom className', () => {
-      render(<CircularProgress value={50} className="custom-class" data-testid="circular-progress" />);
-      expect(screen.getByTestId('circular-progress')).toHaveClass('custom-class');
-    });
-
-    it('forwards ref correctly', () => {
-      const ref = vi.fn();
-      render(<CircularProgress value={50} ref={ref} data-testid="circular-progress" />);
-      expect(ref).toHaveBeenCalled();
-    });
-
-    it('rounds percentage to nearest integer', () => {
-      render(<CircularProgress value={33.7} data-testid="circular-progress" />);
-      expect(screen.getByText('34%')).toBeInTheDocument();
-    });
-
-    it('supports accessibility attributes', () => {
-      render(
-        <CircularProgress 
-          value={50} 
-          role="progressbar" 
-          aria-valuenow={50} 
-          aria-valuemax={100} 
-          data-testid="circular-progress" 
-        />
-      );
-      const circularProgress = screen.getByTestId('circular-progress');
-      expect(circularProgress).toHaveAttribute('role', 'progressbar');
-      expect(circularProgress).toHaveAttribute('aria-valuenow', '50');
-      expect(circularProgress).toHaveAttribute('aria-valuemax', '100');
     });
   });
 });

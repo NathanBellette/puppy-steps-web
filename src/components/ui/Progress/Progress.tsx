@@ -6,9 +6,12 @@ export interface ProgressProps extends React.HTMLAttributes<HTMLDivElement> {
   max?: number;
 }
 
+/** Converts value/max into a percentage clamped to the 0-100 range. */
+const toClampedPercentage = (value: number, max: number) => Math.min(Math.max((value / max) * 100, 0), 100);
+
 const Progress = forwardRef<HTMLDivElement, ProgressProps>(
   ({ className, value, max = 100, ...props }, ref) => {
-    const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
+    const percentage = toClampedPercentage(value, max);
 
     return (
       <div
@@ -47,11 +50,19 @@ const CircularProgress = forwardRef<HTMLDivElement, CircularProgressProps>(
     showPercentage = true,
     ...props 
   }, ref) => {
-    const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
+    const percentage = toClampedPercentage(value, max);
     const radius = (size - strokeWidth) / 2;
     const circumference = radius * 2 * Math.PI;
     const strokeDasharray = circumference;
     const strokeDashoffset = circumference - (percentage / 100) * circumference;
+    const circleProps = {
+      cx: size / 2,
+      cy: size / 2,
+      r: radius,
+      stroke: 'currentColor',
+      strokeWidth,
+      fill: 'transparent',
+    };
 
     return (
       <div
@@ -66,23 +77,10 @@ const CircularProgress = forwardRef<HTMLDivElement, CircularProgressProps>(
           className="transform -rotate-90"
         >
           {/* Background circle */}
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            stroke="currentColor"
-            strokeWidth={strokeWidth}
-            fill="transparent"
-            className="text-slate-200 dark:text-slate-700"
-          />
+          <circle {...circleProps} className="text-slate-200 dark:text-slate-700" />
           {/* Progress circle */}
           <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            stroke="currentColor"
-            strokeWidth={strokeWidth}
-            fill="transparent"
+            {...circleProps}
             strokeDasharray={strokeDasharray}
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"

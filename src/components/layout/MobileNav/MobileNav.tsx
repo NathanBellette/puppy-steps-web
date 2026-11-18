@@ -2,29 +2,14 @@ import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
-import { 
-  LayoutDashboard, 
-  Target, 
-  Calendar, 
-  Activity,
-  MoreHorizontal,
-  BookOpen,
-  Settings,
-  LogOut,
-  X
-} from 'lucide-react';
+import { MoreHorizontal, LogOut, X } from 'lucide-react';
+import { navLinkClassName, primaryNavItems, secondaryNavItems } from '../navigation';
 
-const tabs = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Plan', href: '/goals', icon: Target },
-  { name: 'Sessions', href: '/sessions', icon: Activity },
-  { name: 'Calendar', href: '/calendar', icon: Calendar },
-];
-
-const moreItems = [
-  { name: 'Resources', href: '/resources', icon: BookOpen },
-  { name: 'Settings', href: '/settings', icon: Settings },
-];
+const tabClassName = navLinkClassName(
+  'flex flex-col items-center justify-center py-2 px-1 text-xs font-medium rounded-md transition-colors',
+  'text-primary-600 dark:text-primary-400',
+  'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+);
 
 export const MobileNav = () => {
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -82,7 +67,7 @@ export const MobileNav = () => {
 
           {/* Items */}
           <nav className="px-4 pb-4 space-y-1">
-            {moreItems.map((item) => (
+            {secondaryNavItems.map((item) => (
               <button
                 key={item.name}
                 onClick={() => handleMoreItemClick(item.href)}
@@ -113,19 +98,12 @@ export const MobileNav = () => {
       {/* Bottom tab bar */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 lg:hidden">
         <div className="grid grid-cols-5 gap-1 px-2 py-2">
-          {tabs.map((item) => (
+          {primaryNavItems.map((item) => (
             <NavLink
               key={item.name}
               to={item.href}
               onClick={() => setIsMoreOpen(false)}
-              className={({ isActive }) =>
-                cn(
-                  'flex flex-col items-center justify-center py-2 px-1 text-xs font-medium rounded-md transition-colors',
-                  isActive
-                    ? 'text-primary-600 dark:text-primary-400'
-                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
-                )
-              }
+              className={tabClassName}
             >
               <item.icon className="h-5 w-5 mb-1" />
               <span className="truncate">{item.name}</span>

@@ -1,12 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { FormField } from '@/components/ui/FormField';
+import { PhotoField } from '@/components/PhotoField';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { useSessions } from '@/hooks/useSessions';
+import { usePhotoInput } from '@/hooks/usePhotoInput';
 import { useToast } from '@/context/ToastContext';
 import { useDogs } from '@/hooks/useDogProfile';
 import {
   SessionType,
+  SESSION_TYPES,
   SESSION_TYPE_EMOJI,
   SESSION_CATEGORIES,
   ReactionLevel,
@@ -19,9 +23,68 @@ import {
   INTENSITY_LABELS,
 } from '@/types';
 import { cn, formatDateLong } from '@/lib/utils';
-import { X, ArrowLeft, Calendar } from 'lucide-react';
+import { ArrowLeft, Calendar } from 'lucide-react';
 
 const reactionLevels: ReactionLevel[] = ['😰', '😟', '😐', '😊', '😍'];
+
+const placeItems = PLACE_TYPES.map((place) => ({ value: place, label: PLACE_TYPE_LABELS[place] }));
+
+const fieldClassName =
+  'w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-slate-800 dark:text-slate-100';
+
+/** Today's date as YYYY-MM-DD, the format used by date inputs. */
+const todayIsoDate = () => new Date().toISOString().split('T')[0];
+
+interface OptionGroupProps<T extends string> {
+  label: string;
+  options: readonly T[];
+  value: T;
+  onChange: (value: T) => void;
+  /** Layout classes for the options container */
+  className: string;
+  /** Classes for every option; selected/unselected classes extend the shared bordered states */
+  optionClassName: string;
+  selectedClassName?: string;
+  unselectedClassName?: string;
+  renderOption: (option: T) => ReactNode;
+  getTitle?: (option: T) => string;
+}
+
+/** A labelled group of bordered buttons with exactly one option selected. */
+const OptionGroup = <T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+  className,
+  optionClassName,
+  selectedClassName,
+  unselectedClassName,
+  renderOption,
+  getTitle,
+}: OptionGroupProps<T>) => (
+  <FormField label={label} labelClassName="mb-2">
+    <div className={className}>
+      {options.map((option) => (
+        <button
+          key={option}
+          type="button"
+          onClick={() => onChange(option)}
+          className={cn(
+            'rounded-lg border-2 transition-all',
+            optionClassName,
+            value === option
+              ? cn('border-primary-500 bg-primary-50 dark:bg-primary-900/20', selectedClassName)
+              : cn('border-slate-200 dark:border-slate-700 hover:border-slate-300', unselectedClassName)
+          )}
+          title={getTitle?.(option)}
+        >
+          {renderOption(option)}
+        </button>
+      ))}
+    </div>
+  </FormField>
+);
 
 export const LogExposure = () => {
   const navigate = useNavigate();
@@ -36,16 +99,17 @@ export const LogExposure = () => {
   }) || {};
 
   const { createSession, isCreating } = useSessions(selectedDog?.id || '');
-  
+
   const [selectedType, setSelectedType] = useState<SessionType>(prefillType ?? 'people');
   const [selectedCategory, setSelectedCategory] = useState<string>(prefillCategory ?? '');
   const [selectedReaction, setSelectedReaction] = useState<ReactionLevel>('😊');
   const [selectedPlace, setSelectedPlace] = useState<PlaceType>('Home');
   const [selectedIntensity, setSelectedIntensity] = useState<Intensity>('low');
   const [isNewToDog, setIsNewToDog] = useState<boolean>(false);
-  const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState<string>(todayIsoDate);
   const [notes, setNotes] = useState<string>('');
-  const [photo, setPhoto] = useState<File | null>(null);
+  const photoInput = usePhotoInput();
+  const { photo } = photoInput;
   const [formError, setFormError] = useState<string | null>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
@@ -115,16 +179,11 @@ export const LogExposure = () => {
     }
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setPhoto(file);
-    }
-  };
-
   if (!selectedDog) {
     return null; // Will redirect in useEffect
   }
+
+  const formattedDate = formatDateLong(new Date(date + 'T00:00:00'));
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -176,11 +235,7 @@ export const LogExposure = () => {
             </div>
           )}
 
-          {/* Date */}
-          <div>
-            <label htmlFor="date" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Date
-            </label>
+          <FormField label="Date" htmlFor="date">
             <input
               ref={dateInputRef}
               type="date"
@@ -188,7 +243,7 @@ export const LogExposure = () => {
               value={date}
               onChange={(e) => setDate(e.target.value)}
               required
-              max={new Date().toISOString().split('T')[0]}
+              max={todayIsoDate()}
               className="sr-only"
               aria-label="Select date"
               tabIndex={-1}
@@ -203,46 +258,32 @@ export const LogExposure = () => {
                 }
               }}
               className="w-full flex items-center gap-3 px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-left text-slate-900 dark:text-slate-100 hover:border-slate-400 dark:hover:border-slate-600 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
-              aria-label={`Selected date: ${formatDateLong(new Date(date + 'T00:00:00'))}. Click to change.`}
+              aria-label={`Selected date: ${formattedDate}. Click to change.`}
               tabIndex={0}
             >
               <Calendar className="h-4 w-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
               <span className="text-sm font-medium">
-                {formatDateLong(new Date(date + 'T00:00:00'))}
+                {formattedDate}
               </span>
             </button>
-          </div>
+          </FormField>
 
-          {/* Exposure Type */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Exposure Type
-            </label>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {(['people', 'dogs', 'environments', 'noises'] as SessionType[]).map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => handleTypeChange(type)}
-                  className={cn(
-                    'p-3 rounded-lg border-2 transition-all flex items-center justify-center gap-2',
-                    selectedType === type
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
-                  )}
-                >
-                  <span className="text-2xl">{SESSION_TYPE_EMOJI[type]}</span>
-                  <span className="text-sm font-medium capitalize">{type}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+          <OptionGroup
+            label="Exposure Type"
+            options={SESSION_TYPES}
+            value={selectedType}
+            onChange={handleTypeChange}
+            className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+            optionClassName="p-3 flex items-center justify-center gap-2"
+            renderOption={(type) => (
+              <>
+                <span className="text-2xl">{SESSION_TYPE_EMOJI[type]}</span>
+                <span className="text-sm font-medium capitalize">{type}</span>
+              </>
+            )}
+          />
 
-          {/* Category */}
-          <div>
-            <label htmlFor="category" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Category
-            </label>
+          <FormField label="Category" htmlFor="category">
             <select
               id="category"
               value={selectedCategory}
@@ -251,7 +292,7 @@ export const LogExposure = () => {
                 setFormError(null);
               }}
               required
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-slate-800 dark:text-slate-100"
+              className={fieldClassName}
             >
               <option value="">Select a category</option>
               {SESSION_CATEGORIES[selectedType].map((category) => (
@@ -260,55 +301,23 @@ export const LogExposure = () => {
                 </option>
               ))}
             </select>
-          </div>
+          </FormField>
 
-          {/* Place */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Place
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {PLACE_TYPES.map((place) => (
-                <button
-                  key={place}
-                  type="button"
-                  onClick={() => setSelectedPlace(place)}
-                  className={cn(
-                    'px-4 py-2 rounded-full text-sm font-medium transition-all',
-                    selectedPlace === place
-                      ? 'bg-primary-500 text-white shadow-md'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                  )}
-                >
-                  {PLACE_TYPE_LABELS[place]}
-                </button>
-              ))}
-            </div>
-          </div>
+          <FormField label="Place" labelClassName="mb-2">
+            <SegmentedControl items={placeItems} value={selectedPlace} onChange={setSelectedPlace} />
+          </FormField>
 
-          {/* Intensity */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Intensity
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {INTENSITY_LEVELS.map((level) => (
-                <button
-                  key={level}
-                  type="button"
-                  onClick={() => setSelectedIntensity(level)}
-                  className={cn(
-                    'px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all text-center',
-                    selectedIntensity === level
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                      : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-300'
-                  )}
-                >
-                  {INTENSITY_LABELS[level]}
-                </button>
-              ))}
-            </div>
-          </div>
+          <OptionGroup
+            label="Intensity"
+            options={INTENSITY_LEVELS}
+            value={selectedIntensity}
+            onChange={setSelectedIntensity}
+            className="grid grid-cols-3 gap-2"
+            optionClassName="px-4 py-3 text-sm font-medium text-center"
+            selectedClassName="text-primary-700 dark:text-primary-300"
+            unselectedClassName="text-slate-700 dark:text-slate-300"
+            renderOption={(level) => INTENSITY_LABELS[level]}
+          />
 
           {/* New to my dog? (People/Dogs only) */}
           {showNewToDog && (
@@ -332,73 +341,37 @@ export const LogExposure = () => {
             </div>
           )}
 
-          {/* Reaction */}
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Reaction
-            </label>
-            <div className="grid grid-cols-5 gap-2">
-              {reactionLevels.map((reaction) => (
-                <button
-                  key={reaction}
-                  type="button"
-                  onClick={() => setSelectedReaction(reaction)}
-                  className={cn(
-                    'p-3 rounded-lg border-2 transition-all flex flex-col items-center',
-                    selectedReaction === reaction
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 scale-105'
-                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
-                  )}
-                  title={REACTION_LABELS[reaction]}
-                >
-                  <span className="text-3xl sm:text-4xl">{reaction}</span>
-                  <p className="text-xs mt-1 text-slate-600 dark:text-slate-400 hidden sm:block">
-                    {REACTION_LABELS[reaction]}
-                  </p>
-                </button>
-              ))}
-            </div>
-          </div>
+          <OptionGroup
+            label="Reaction"
+            options={reactionLevels}
+            value={selectedReaction}
+            onChange={setSelectedReaction}
+            className="grid grid-cols-5 gap-2"
+            optionClassName="p-3 flex flex-col items-center"
+            selectedClassName="scale-105"
+            getTitle={(reaction) => REACTION_LABELS[reaction]}
+            renderOption={(reaction) => (
+              <>
+                <span className="text-3xl sm:text-4xl">{reaction}</span>
+                <p className="text-xs mt-1 text-slate-600 dark:text-slate-400 hidden sm:block">
+                  {REACTION_LABELS[reaction]}
+                </p>
+              </>
+            )}
+          />
 
-          {/* Notes */}
-          <div>
-            <label htmlFor="notes" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Notes (optional)
-            </label>
+          <FormField label="Notes (optional)" htmlFor="notes">
             <textarea
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-slate-800 dark:text-slate-100"
+              className={fieldClassName}
               placeholder="Add any additional notes about this exposure..."
             />
-          </div>
+          </FormField>
 
-          {/* Photo Upload */}
-          <div>
-            <label htmlFor="photo" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Photo (optional)
-            </label>
-            <Input
-              type="file"
-              id="photo"
-              accept="image/*"
-              onChange={handlePhotoChange}
-            />
-            {photo && (
-              <div className="mt-2 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                <span className="flex-1">{photo.name}</span>
-                <button
-                  type="button"
-                  onClick={() => setPhoto(null)}
-                  className="text-red-500 hover:text-red-700 p-1"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            )}
-          </div>
+          <PhotoField id="photo" {...photoInput} />
 
         </form>
       </div>

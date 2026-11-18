@@ -1,71 +1,29 @@
-import { forwardRef } from 'react';
-import { cn } from '@/lib/utils';
+import { createStyledElement } from '@/lib/createStyledElement';
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {}
 
-const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn(
-        'rounded-lg border border-slate-200 bg-white text-slate-950 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50',
-        className
-      )}
-      {...props}
-    />
-  )
+const Card = createStyledElement<HTMLDivElement>(
+  'div',
+  'rounded-lg border border-slate-200 bg-white text-slate-950 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50',
+  'Card'
 );
-Card.displayName = 'Card';
 
-const CardHeader = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn('flex flex-col space-y-1.5 p-6', className)}
-      {...props}
-    />
-  )
-);
-CardHeader.displayName = 'CardHeader';
+const CardHeader = createStyledElement<HTMLDivElement>('div', 'flex flex-col space-y-1.5 p-6', 'CardHeader');
 
-const CardTitle = forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
-  ({ className, ...props }, ref) => (
-    <h3
-      ref={ref}
-      className={cn('text-2xl font-semibold leading-none tracking-tight', className)}
-      {...props}
-    />
-  )
+const CardTitle = createStyledElement<HTMLHeadingElement>(
+  'h3',
+  'text-2xl font-semibold leading-none tracking-tight',
+  'CardTitle'
 );
-CardTitle.displayName = 'CardTitle';
 
-const CardDescription = forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
-  ({ className, ...props }, ref) => (
-    <p
-      ref={ref}
-      className={cn('text-sm text-slate-500 dark:text-slate-400', className)}
-      {...props}
-    />
-  )
+const CardDescription = createStyledElement<HTMLParagraphElement>(
+  'p',
+  'text-sm text-slate-500 dark:text-slate-400',
+  'CardDescription'
 );
-CardDescription.displayName = 'CardDescription';
 
-const CardContent = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('p-6 pt-0', className)} {...props} />
-  )
-);
-CardContent.displayName = 'CardContent';
+const CardContent = createStyledElement<HTMLDivElement>('div', 'p-6 pt-0', 'CardContent');
 
-const CardFooter = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn('flex items-center p-6 pt-0', className)}
-      {...props}
-    />
-  )
-);
-CardFooter.displayName = 'CardFooter';
+const CardFooter = createStyledElement<HTMLDivElement>('div', 'flex items-center p-6 pt-0', 'CardFooter');
 
 export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };

@@ -1,24 +1,16 @@
-import { NavLink, Link } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { 
-  LayoutDashboard, 
-  Target, 
-  Calendar, 
-  BookOpen, 
-  Settings,
-  LogOut,
-  Activity
-} from 'lucide-react';
+import { NavLink } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { HomeLink } from '@/components/AppLogo';
+import { navLinkClassName, primaryNavItems, secondaryNavItems } from '../navigation';
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Plan', href: '/goals', icon: Target },
-  { name: 'Sessions', href: '/sessions', icon: Activity },
-  { name: 'Calendar', href: '/calendar', icon: Calendar },
-  { name: 'Resources', href: '/resources', icon: BookOpen },
-  { name: 'Settings', href: '/settings', icon: Settings },
-];
+const navigation = [...primaryNavItems, ...secondaryNavItems];
+
+const linkClassName = navLinkClassName(
+  'group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
+  'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300',
+  'text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100'
+);
 
 export const Sidebar = () => {
   const { signOut } = useAuth();
@@ -32,23 +24,13 @@ export const Sidebar = () => {
       <div className="flex h-full w-full flex-col bg-white dark:bg-slate-900 shadow-lg border-r border-slate-200 dark:border-slate-700">
         {/* Header */}
         <div className="flex h-16 items-center px-6 border-b border-slate-200 dark:border-slate-700">
-          <Link
-            to="/dashboard"
-            className="flex items-center"
-            aria-label="Go to home page"
-            tabIndex={0}
-          >
-            <div className="flex-shrink-0">
-              <div className="h-8 w-8 rounded-lg bg-primary-500 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">P</span>
-              </div>
-            </div>
+          <HomeLink>
             <div className="ml-3">
               <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 PuppySteps
               </h1>
             </div>
-          </Link>
+          </HomeLink>
         </div>
 
         {/* Navigation */}
@@ -57,14 +39,7 @@ export const Sidebar = () => {
             <NavLink
               key={item.name}
               to={item.href}
-              className={({ isActive }) =>
-                cn(
-                  'group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                  isActive
-                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300'
-                    : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100'
-                )
-              }
+              className={linkClassName}
             >
               <item.icon
                 className="mr-3 h-5 w-5 flex-shrink-0"

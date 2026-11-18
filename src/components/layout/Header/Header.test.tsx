@@ -1,36 +1,21 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
 import { Header } from './Header';
+import { useAuth } from '@/hooks/useAuth';
+import { useDogs } from '@/hooks/useDogProfile';
+import { makeDog } from '@/test/fixtures';
+import { expectAttributes, expectLink, expectNoButton, expectTexts, renderWithRouter, stubHook } from '@/test/utils';
 
 // Mock the hooks and context
-const mockUser = {
-  displayName: 'John Doe',
-  email: 'john@example.com',
-  photoURL: 'https://example.com/photo.jpg',
-};
+vi.mock('@/hooks/useAuth');
+vi.mock('@/hooks/useDogProfile');
 
 const mockDogs = [
-  { id: 'dog-1', name: 'Buddy', photoUrl: 'https://example.com/buddy.jpg' },
-  { id: 'dog-2', name: 'Max', photoUrl: undefined },
+  makeDog({ photoUrl: 'https://example.com/buddy.jpg' }),
+  makeDog({ id: 'dog-2', name: 'Max', photoUrl: undefined }),
 ];
 
-let mockSelectedDog = mockDogs[0];
-const mockSetSelectedDog = vi.fn((dog) => {
-  mockSelectedDog = dog;
-});
-
-vi.mock('@/hooks/useAuth', () => ({
-  useAuth: () => ({ user: mockUser }),
-}));
-
-vi.mock('@/hooks/useDogProfile', () => ({
-  useDogs: () => ({
-    dogs: mockDogs,
-    selectedDog: mockSelectedDog,
-    setSelectedDog: mockSetSelectedDog,
-  }),
-}));
+const mockSetSelectedDog = vi.fn();
 
 // Mock the UI components
 vi.mock('@/components/ui/DogAvatar', () => ({
@@ -52,14 +37,16 @@ vi.mock('@/components/ui/Select', () => ({
   ),
 }));
 
-const renderHeader = () =>
-  render(
-    <MemoryRouter>
-      <Header />
-    </MemoryRouter>
-  );
+const renderHeader = () => renderWithRouter(<Header />);
 
 describe('Header', () => {
+  beforeEach(() => {
+    stubHook(useAuth, {
+      user: { uid: 'user-1', displayName: 'John Doe', email: 'john@example.com', photoURL: 'https://example.com/photo.jpg' },
+    });
+    stubHook(useDogs, { dogs: mockDogs, selectedDog: mockDogs[0], setSelectedDog: mockSetSelectedDog });
+  });
+
   it('renders header with banner role', () => {
     renderHeader();
     expect(screen.getByRole('banner')).toBeInTheDocument();
@@ -67,59 +54,48 @@ describe('Header', () => {
 
   it('renders app icon that links to home page', () => {
     renderHeader();
-
-    const homeLink = screen.getByRole('link', { name: /go to home page/i });
-    expect(homeLink).toBeInTheDocument();
-    expect(homeLink).toHaveAttribute('href', '/dashboard');
+    expectLink(/go to home page/i, '/dashboard');
   });
 
   it('renders dog avatar when selected dog exists', () => {
     renderHeader();
 
-    const dogAvatar = screen.getByTestId('dog-avatar');
-    expect(dogAvatar).toBeInTheDocument();
-    expect(dogAvatar).toHaveAttribute('data-name', 'Buddy');
-    expect(dogAvatar).toHaveAttribute('data-photo', 'https://example.com/buddy.jpg');
-    expect(dogAvatar).toHaveAttribute('data-size', 'sm');
+    expectAttributes(screen.getByTestId('dog-avatar'), {
+      'data-name': 'Buddy',
+      'data-photo': 'https://example.com/buddy.jpg',
+      'data-size': 'sm',
+    });
   });
 
   it('renders dog selector with options', () => {
     renderHeader();
 
-    const select = screen.getByTestId('dog-select');
-    expect(select).toHaveValue('dog-1');
-
-    expect(screen.getByRole('option', { name: 'Select a dog' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Buddy' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Max' })).toBeInTheDocument();
+    expect(screen.getByTestId('dog-select')).toHaveValue('dog-1');
+    ['Select a dog', 'Buddy', 'Max'].forEach((name) => {
+      expect(screen.getByRole('option', { name })).toBeInTheDocument();
+    });
   });
 
   it('handles dog selection change', async () => {
-    const user = userEvent.setup();
     renderHeader();
 
-    const select = screen.getByTestId('dog-select');
-    await user.selectOptions(select, 'dog-2');
+    await userEvent.setup().selectOptions(screen.getByTestId('dog-select'), 'dog-2');
 
     expect(mockSetSelectedDog).toHaveBeenCalledWith(mockDogs[1]);
   });
 
   it('renders user information', () => {
     renderHeader();
-
-    expect(screen.getByText('John Doe')).toBeInTheDocument();
-    expect(screen.getByText('john@example.com')).toBeInTheDocument();
+    expectTexts('John Doe', 'john@example.com');
   });
 
   it('renders user avatar with photo', () => {
     renderHeader();
-
-    const userAvatar = screen.getByAltText('User avatar');
-    expect(userAvatar).toHaveAttribute('src', 'https://example.com/photo.jpg');
+    expect(screen.getByAltText('User avatar')).toHaveAttribute('src', 'https://example.com/photo.jpg');
   });
 
   it('does not render hamburger menu button', () => {
     renderHeader();
-    expect(screen.queryByRole('button', { name: /open menu/i })).not.toBeInTheDocument();
+    expectNoButton(/open menu/i);
   });
 });

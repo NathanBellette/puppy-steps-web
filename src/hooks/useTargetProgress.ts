@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useGoals } from './useGoals';
 import { useSessions } from './useSessions';
 import { computeTargetProgress, TargetProgress } from '@/services/targetProgress';
+import { computeCategoryProgress, computeGoalProgress } from '@/services/goalStats';
 import { SessionType } from '@/types/session';
-import { GoalProgress } from '@/types/goal';
+import { Goal, GoalProgress } from '@/types/goal';
 
 export interface TargetProgressResult {
   /** Per-goal computed progress, keyed by goal ID */
@@ -31,36 +32,21 @@ export const useTargetProgress = (dogId?: string): TargetProgressResult => {
     [goals, sessions]
   );
 
-  const categoryProgress = useMemo(() => {
-    const types: SessionType[] = ['people', 'dogs', 'environments', 'noises'];
-    const result = {} as Record<SessionType, GoalProgress>;
+  const isTargetComplete = useCallback((goal: Goal) => !!progress[goal.id]?.isComplete, [progress]);
 
-    for (const type of types) {
-      const typeGoals = goals.filter(g => g.type === type);
-      const total = typeGoals.length;
-      const completed = typeGoals.filter(g => progress[g.id]?.isComplete).length;
-      result[type] = {
-        total,
-        completed,
-        percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
-      };
-    }
+  const categoryProgress = useMemo(
+    () => computeCategoryProgress(goals, isTargetComplete),
+    [goals, isTargetComplete]
+  );
 
-    return result;
-  }, [goals, progress]);
-
-  const totalTargets = goals.length;
-  const completedTargets = Object.values(progress).filter(p => p.isComplete).length;
-  const overallPercentage = totalTargets > 0
-    ? Math.round((completedTargets / totalTargets) * 100)
-    : 0;
+  const overall = computeGoalProgress(goals, isTargetComplete);
 
   return {
     progress,
     categoryProgress,
-    totalTargets,
-    completedTargets,
-    overallPercentage,
+    totalTargets: overall.total,
+    completedTargets: overall.completed,
+    overallPercentage: overall.percentage,
     isLoading: goalsLoading || sessionsLoading,
   };
 };

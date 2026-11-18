@@ -41,194 +41,130 @@ afterEach(async () => {
 
 // --- Helpers ---
 
-function authedDb(uid: string) {
-  return testEnv.authenticatedContext(uid).firestore();
-}
+type DocData = Record<string, unknown>;
 
-function unauthedDb() {
-  return testEnv.unauthenticatedContext().firestore();
-}
+/** Firestore client acting as the given user, or as an unauthenticated visitor when uid is null. */
+const dbAs = (uid: string | null) =>
+  (uid ? testEnv.authenticatedContext(uid) : testEnv.unauthenticatedContext()).firestore();
+
+const readAs = (uid: string | null, path: string) => getDoc(doc(dbAs(uid), path));
+const createAs = (uid: string, path: string, data: DocData) => setDoc(doc(dbAs(uid), path), data);
+const updateAs = (uid: string, path: string, data: DocData) => updateDoc(doc(dbAs(uid), path), data);
+const deleteAs = (uid: string, path: string) => deleteDoc(doc(dbAs(uid), path));
+
+/** Writes a document with security rules disabled, as an admin would. */
+const seed = (path: string, data: DocData) =>
+  testEnv.withSecurityRulesDisabled((context) => setDoc(doc(context.firestore(), path), data));
 
 // --- Users collection ---
 
 describe('Users collection rules', () => {
-  it('allows a user to read their own document', async () => {
-    const db = authedDb('user-1');
-    // Seed data as admin
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(doc(context.firestore(), 'users/user-1'), {
-        email: 'test@example.com',
-        createdAt: new Date(),
-      });
-    });
+  const ownUser = { email: 'test@example.com', createdAt: new Date() };
 
-    await assertSucceeds(getDoc(doc(db, 'users', 'user-1')));
+  it('allows a user to read their own document', async () => {
+    await seed('users/user-1', ownUser);
+    await assertSucceeds(readAs('user-1', 'users/user-1'));
   });
 
   it('denies a user from reading another user document', async () => {
-    const db = authedDb('user-1');
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(doc(context.firestore(), 'users/user-2'), {
-        email: 'other@example.com',
-        createdAt: new Date(),
-      });
-    });
-
-    await assertFails(getDoc(doc(db, 'users', 'user-2')));
+    await seed('users/user-2', { email: 'other@example.com', createdAt: new Date() });
+    await assertFails(readAs('user-1', 'users/user-2'));
   });
 
   it('denies unauthenticated access to user documents', async () => {
-    const db = unauthedDb();
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(doc(context.firestore(), 'users/user-1'), {
-        email: 'test@example.com',
-      });
-    });
-
-    await assertFails(getDoc(doc(db, 'users', 'user-1')));
+    await seed('users/user-1', { email: 'test@example.com' });
+    await assertFails(readAs(null, 'users/user-1'));
   });
 
-  it('allows a user to create their own document', async () => {
-    const db = authedDb('user-1');
-    await assertSucceeds(
-      setDoc(doc(db, 'users', 'user-1'), {
-        email: 'test@example.com',
-        createdAt: new Date(),
-      })
-    );
-  });
+  it('allows a user to create their own document', () =>
+    assertSucceeds(createAs('user-1', 'users/user-1', ownUser)));
 
-  it('denies creating a user document without email', async () => {
-    const db = authedDb('user-1');
-    await assertFails(
-      setDoc(doc(db, 'users', 'user-1'), {
-        name: 'Test',
-        createdAt: new Date(),
-      })
-    );
-  });
+  it('denies creating a user document without email', () =>
+    assertFails(createAs('user-1', 'users/user-1', { name: 'Test', createdAt: new Date() })));
 
   it('allows a user to delete their own document', async () => {
-    const db = authedDb('user-1');
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(doc(context.firestore(), 'users/user-1'), {
-        email: 'test@example.com',
-      });
-    });
-
-    await assertSucceeds(deleteDoc(doc(db, 'users', 'user-1')));
+    await seed('users/user-1', { email: 'test@example.com' });
+    await assertSucceeds(deleteAs('user-1', 'users/user-1'));
   });
 });
 
-// --- Dogs collection ---
+// --- Collections owned by a user via a userId field ---
 
-describe('Dogs collection rules', () => {
-  const validDog = {
-    userId: 'user-1',
-    name: 'Buddy',
-    age: 6,
-    breed: 'Labrador',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  it('allows owner to read their dog', async () => {
-    const db = authedDb('user-1');
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(doc(context.firestore(), 'dogs/dog-1'), validDog);
+/**
+ * Defines the rules tests shared by every user-owned collection: owners can read,
+ * create and delete their documents, and nobody can touch another user's documents.
+ */
+const describeOwnedCollection = (
+  title: string,
+  noun: string,
+  path: string,
+  validDoc: DocData,
+  invalidDocs: Record<string, DocData>,
+  extraTests: () => void = () => {}
+) =>
+  describe(title, () => {
+    it(`allows owner to read their ${noun}`, async () => {
+      await seed(path, validDoc);
+      await assertSucceeds(readAs('user-1', path));
     });
 
-    await assertSucceeds(getDoc(doc(db, 'dogs', 'dog-1')));
-  });
-
-  it('denies reading another user\'s dog', async () => {
-    const db = authedDb('user-2');
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(doc(context.firestore(), 'dogs/dog-1'), validDog);
+    it(`denies reading another user's ${noun}`, async () => {
+      await seed(path, validDoc);
+      await assertFails(readAs('user-2', path));
     });
 
-    await assertFails(getDoc(doc(db, 'dogs', 'dog-1')));
-  });
+    it(`allows creating a ${noun} with valid data`, () => assertSucceeds(createAs('user-1', path, validDoc)));
 
-  it('allows creating a dog with valid data', async () => {
-    const db = authedDb('user-1');
-    await assertSucceeds(setDoc(doc(db, 'dogs', 'dog-1'), validDog));
-  });
+    it(`denies creating a ${noun} for another user`, () =>
+      assertFails(createAs('user-1', path, { ...validDoc, userId: 'user-2' })));
 
-  it('denies creating a dog for another user', async () => {
-    const db = authedDb('user-1');
-    await assertFails(
-      setDoc(doc(db, 'dogs', 'dog-1'), {
-        ...validDog,
-        userId: 'user-2',
-      })
-    );
-  });
+    it.each(Object.entries(invalidDocs))(`denies creating a ${noun} %s`, (_reason, data) =>
+      assertFails(createAs('user-1', path, data)));
 
-  it('denies creating a dog without a name', async () => {
-    const db = authedDb('user-1');
-    await assertFails(
-      setDoc(doc(db, 'dogs', 'dog-1'), {
-        userId: 'user-1',
-        age: 6,
-        breed: 'Labrador',
-      })
-    );
-  });
-
-  it('denies creating a dog without a valid age', async () => {
-    const db = authedDb('user-1');
-    await assertFails(
-      setDoc(doc(db, 'dogs', 'dog-1'), {
-        userId: 'user-1',
-        name: 'Buddy',
-        age: 'six', // not a number
-        breed: 'Labrador',
-      })
-    );
-  });
-
-  it('allows owner to update their dog', async () => {
-    const db = authedDb('user-1');
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(doc(context.firestore(), 'dogs/dog-1'), validDog);
+    it(`allows owner to delete their ${noun}`, async () => {
+      await seed(path, validDoc);
+      await assertSucceeds(deleteAs('user-1', path));
     });
 
-    await assertSucceeds(
-      updateDoc(doc(db, 'dogs', 'dog-1'), {
-        name: 'Buddy Jr',
-        userId: 'user-1',
-      })
-    );
+    extraTests();
   });
 
-  it('denies updating a dog to change userId', async () => {
-    const db = authedDb('user-1');
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(doc(context.firestore(), 'dogs/dog-1'), validDog);
+const validDog = {
+  userId: 'user-1',
+  name: 'Buddy',
+  age: 6,
+  breed: 'Labrador',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
+describeOwnedCollection(
+  'Dogs collection rules',
+  'dog',
+  'dogs/dog-1',
+  validDog,
+  {
+    'without a name': { userId: 'user-1', age: 6, breed: 'Labrador' },
+    'without a valid age': { userId: 'user-1', name: 'Buddy', age: 'six', breed: 'Labrador' },
+  },
+  () => {
+    it('allows owner to update their dog', async () => {
+      await seed('dogs/dog-1', validDog);
+      await assertSucceeds(updateAs('user-1', 'dogs/dog-1', { name: 'Buddy Jr', userId: 'user-1' }));
     });
 
-    await assertFails(
-      updateDoc(doc(db, 'dogs', 'dog-1'), {
-        userId: 'user-2',
-      })
-    );
-  });
-
-  it('allows owner to delete their dog', async () => {
-    const db = authedDb('user-1');
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(doc(context.firestore(), 'dogs/dog-1'), validDog);
+    it('denies updating a dog to change userId', async () => {
+      await seed('dogs/dog-1', validDog);
+      await assertFails(updateAs('user-1', 'dogs/dog-1', { userId: 'user-2' }));
     });
+  }
+);
 
-    await assertSucceeds(deleteDoc(doc(db, 'dogs', 'dog-1')));
-  });
-});
-
-// --- Sessions collection ---
-
-describe('Sessions collection rules', () => {
-  const validSession = {
+describeOwnedCollection(
+  'Sessions collection rules',
+  'session',
+  'sessions/s1',
+  {
     userId: 'user-1',
     dogId: 'dog-1',
     date: new Date(),
@@ -236,66 +172,16 @@ describe('Sessions collection rules', () => {
     category: 'Men',
     reaction: '😊',
     createdAt: new Date(),
-  };
+  },
+  // Missing type, category and reaction
+  { 'without required fields': { userId: 'user-1', dogId: 'dog-1' } }
+);
 
-  it('allows owner to read their session', async () => {
-    const db = authedDb('user-1');
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(doc(context.firestore(), 'sessions/s1'), validSession);
-    });
-
-    await assertSucceeds(getDoc(doc(db, 'sessions', 's1')));
-  });
-
-  it('denies reading another user\'s session', async () => {
-    const db = authedDb('user-2');
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(doc(context.firestore(), 'sessions/s1'), validSession);
-    });
-
-    await assertFails(getDoc(doc(db, 'sessions', 's1')));
-  });
-
-  it('allows creating a session with valid data', async () => {
-    const db = authedDb('user-1');
-    await assertSucceeds(setDoc(doc(db, 'sessions', 's1'), validSession));
-  });
-
-  it('denies creating a session without required fields', async () => {
-    const db = authedDb('user-1');
-    await assertFails(
-      setDoc(doc(db, 'sessions', 's1'), {
-        userId: 'user-1',
-        dogId: 'dog-1',
-        // missing type, category, reaction
-      })
-    );
-  });
-
-  it('denies creating a session for another user', async () => {
-    const db = authedDb('user-1');
-    await assertFails(
-      setDoc(doc(db, 'sessions', 's1'), {
-        ...validSession,
-        userId: 'user-2',
-      })
-    );
-  });
-
-  it('allows owner to delete their session', async () => {
-    const db = authedDb('user-1');
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(doc(context.firestore(), 'sessions/s1'), validSession);
-    });
-
-    await assertSucceeds(deleteDoc(doc(db, 'sessions', 's1')));
-  });
-});
-
-// --- Goals collection ---
-
-describe('Goals collection rules', () => {
-  const validGoal = {
+describeOwnedCollection(
+  'Goals collection rules',
+  'goal',
+  'goals/g1',
+  {
     userId: 'user-1',
     dogId: 'dog-1',
     category: 'Men',
@@ -305,74 +191,19 @@ describe('Goals collection rules', () => {
     isCompleted: false,
     createdAt: new Date(),
     updatedAt: new Date(),
-  };
-
-  it('allows owner to read their goal', async () => {
-    const db = authedDb('user-1');
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(doc(context.firestore(), 'goals/g1'), validGoal);
-    });
-
-    await assertSucceeds(getDoc(doc(db, 'goals', 'g1')));
-  });
-
-  it('denies reading another user\'s goal', async () => {
-    const db = authedDb('user-2');
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(doc(context.firestore(), 'goals/g1'), validGoal);
-    });
-
-    await assertFails(getDoc(doc(db, 'goals', 'g1')));
-  });
-
-  it('allows creating a goal with valid data', async () => {
-    const db = authedDb('user-1');
-    await assertSucceeds(setDoc(doc(db, 'goals', 'g1'), validGoal));
-  });
-
-  it('denies creating a goal for another user', async () => {
-    const db = authedDb('user-1');
-    await assertFails(
-      setDoc(doc(db, 'goals', 'g1'), {
-        ...validGoal,
-        userId: 'user-2',
-      })
-    );
-  });
-
-  it('denies creating a goal without required fields', async () => {
-    const db = authedDb('user-1');
-    await assertFails(
-      setDoc(doc(db, 'goals', 'g1'), {
-        userId: 'user-1',
-        dogId: 'dog-1',
-        // missing category, type, targetCount, currentCount
-      })
-    );
-  });
-
-  it('allows owner to delete their goal', async () => {
-    const db = authedDb('user-1');
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(doc(context.firestore(), 'goals/g1'), validGoal);
-    });
-
-    await assertSucceeds(deleteDoc(doc(db, 'goals', 'g1')));
-  });
-});
+  },
+  // Missing category, type, targetCount and currentCount
+  { 'without required fields': { userId: 'user-1', dogId: 'dog-1' } }
+);
 
 // --- Catch-all deny rule ---
 
 describe('Default deny rule', () => {
-  it('denies access to undefined collections', async () => {
-    const db = authedDb('user-1');
-    await assertFails(getDoc(doc(db, 'unknown', 'doc-1')));
-  });
+  it('denies access to undefined collections', () => assertFails(readAs('user-1', 'unknown/doc-1')));
 
   it('denies unauthenticated access to all collections', async () => {
-    const db = unauthedDb();
-    await assertFails(getDoc(doc(db, 'dogs', 'dog-1')));
-    await assertFails(getDoc(doc(db, 'sessions', 's1')));
-    await assertFails(getDoc(doc(db, 'goals', 'g1')));
+    for (const path of ['dogs/dog-1', 'sessions/s1', 'goals/g1']) {
+      await assertFails(readAs(null, path));
+    }
   });
 });

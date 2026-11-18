@@ -4,13 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/Button';
 import { GoalItem } from '@/components/ui/GoalItem';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { NoDogSelected } from '@/components/NoDogSelected';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Spinner } from '@/components/ui/Spinner';
 import { SkeletonList } from '@/components/ui/SkeletonList';
 import { useDogs } from '@/hooks/useDogProfile';
 import { useGoals } from '@/hooks/useGoals';
 import { useTargetProgress } from '@/hooks/useTargetProgress';
-import { SessionType, SESSION_TYPE_EMOJI } from '@/types';
+import { SessionType, SESSION_TYPES, SESSION_TYPE_EMOJI } from '@/types';
 import { getCoachingTip } from '@/services/targetProgress';
 import { Target, AlertCircle, Plus } from 'lucide-react';
 
@@ -21,7 +23,7 @@ const typeLabels: Record<SessionType, string> = {
   noises: 'Noises & Objects',
 };
 
-const segmentItems = (['people', 'dogs', 'environments', 'noises'] as SessionType[]).map(type => ({
+const segmentItems = SESSION_TYPES.map(type => ({
   value: type,
   label: typeLabels[type],
   emoji: SESSION_TYPE_EMOJI[type],
@@ -60,33 +62,12 @@ export const Goals = () => {
   };
 
   if (!selectedDog) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <Card className="w-full max-w-md">
-          <CardContent className="text-center py-8">
-            <EmptyState
-              icon={Target}
-              title="No Dog Selected"
-              description="Please select a dog to view and track their socialisation targets."
-            />
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <NoDogSelected description="Please select a dog to view and track their socialisation targets." />;
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            Plan
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400">
-            Track {selectedDog.name}'s socialisation targets
-          </p>
-        </div>
-      </div>
+      <PageHeader title="Plan" description={`Track ${selectedDog.name}'s socialisation targets`} />
 
       {/* Initialize Goals if empty */}
       {!isLoading && goals.length === 0 && (

@@ -11,14 +11,9 @@ export const uploadImage = async (
   return downloadURL;
 };
 
-// Helper functions for specific use cases
-export const uploadDogPhoto = async (file: File, userId: string, dogId: string): Promise<string> => {
-  const path = `dogs/${userId}/${dogId}/${Date.now()}_${file.name}`;
-  return uploadImage(file, path);
-};
+/** Builds an uploader that stores photos under `<folder>/<userId>/<documentId>/`, timestamped to keep names unique. */
+const photoUploader = (folder: string) => (file: File, userId: string, documentId: string): Promise<string> =>
+  uploadImage(file, `${folder}/${userId}/${documentId}/${Date.now()}_${file.name}`);
 
-export const uploadSessionPhoto = async (file: File, userId: string, sessionId: string): Promise<string> => {
-  const path = `sessions/${userId}/${sessionId}/${Date.now()}_${file.name}`;
-  return uploadImage(file, path);
-};
-
+export const uploadDogPhoto = photoUploader('dogs');
+export const uploadSessionPhoto = photoUploader('sessions');

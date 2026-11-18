@@ -57,6 +57,11 @@ const SessionItem = ({ session, onEdit, onDelete, className }: SessionItemProps)
     }
   };
 
+  const actions = [
+    { label: 'Edit session', Icon: Edit, onAction: onEdit, hoverClassName: 'hover:text-slate-600 dark:hover:text-slate-300' },
+    { label: 'Delete session', Icon: Trash2, onAction: onDelete, hoverClassName: 'hover:text-red-600 dark:hover:text-red-400' },
+  ];
+
   return (
     <div
       className={cn(
@@ -96,23 +101,17 @@ const SessionItem = ({ session, onEdit, onDelete, className }: SessionItemProps)
             </span>
           </div>
           <div className="flex items-center space-x-2">
-            {onEdit && (
-              <button
-                onClick={() => onEdit(session.id)}
-                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                aria-label="Edit session"
-              >
-                <Edit className="w-4 h-4" />
-              </button>
-            )}
-            {onDelete && (
-              <button
-                onClick={() => onDelete(session.id)}
-                className="p-1 text-slate-400 hover:text-red-600 dark:hover:text-red-400"
-                aria-label="Delete session"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+            {actions.map(({ label, Icon, onAction, hoverClassName }) =>
+              onAction && (
+                <button
+                  key={label}
+                  onClick={() => onAction(session.id)}
+                  className={cn('p-1 text-slate-400', hoverClassName)}
+                  aria-label={label}
+                >
+                  <Icon className="w-4 h-4" />
+                </button>
+              )
             )}
           </div>
         </div>

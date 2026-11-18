@@ -24,6 +24,7 @@ export function SegmentedControl<T extends string>({
       {items.map((item) => (
         <button
           key={item.value}
+          type="button"
           onClick={() => onChange(item.value)}
           className={cn(
             'px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2',

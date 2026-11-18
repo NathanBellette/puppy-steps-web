@@ -2,12 +2,13 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { SessionItem } from '@/components/ui/SessionItem';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { NoDogSelected } from '@/components/NoDogSelected';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { useDogs } from '@/hooks/useDogProfile';
 import { useSessions } from '@/hooks/useSessions';
 import { Session, SessionType, SESSION_TYPE_EMOJI } from '@/types';
 import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Target } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 
 const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -117,31 +118,15 @@ export const Calendar = () => {
   const selectedDaySessions = selectedDate ? getSessionsForDate(selectedDate) : [];
 
   if (!selectedDog) {
-    return (
-      <div className="flex items-center justify-center min-h-96">
-        <Card className="w-full max-w-md">
-          <CardContent className="text-center py-8">
-            <EmptyState
-              icon={Target}
-              title="No Dog Selected"
-              description="Please select a dog to view their session calendar."
-            />
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <NoDogSelected description="Please select a dog to view their session calendar." />;
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-          Calendar
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400">
-          View {selectedDog.name}'s socialisation sessions over time
-        </p>
-      </div>
+      <PageHeader
+        title="Calendar"
+        description={`View ${selectedDog.name}'s socialisation sessions over time`}
+      />
 
       <Card>
         <CardHeader>

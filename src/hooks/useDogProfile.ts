@@ -1,6 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from './useAuth';
 import { 
   getUserDogs, 
   createDog, 
@@ -11,6 +9,7 @@ import {
 import { uploadDogPhoto } from '@/lib/storage';
 import { Dog, DogFormData } from '@/types';
 import { createInitialGoalsForDog } from '@/types/goal';
+import { useRefreshingMutation, useUserDocuments } from './useUserDocuments';
 
 const SELECTED_DOG_KEY = 'selectedDogId';
 
@@ -19,25 +18,21 @@ const SELECTED_DOG_KEY = 'selectedDogId';
  * Manages the dog list via React Query and the selected dog via localStorage.
  */
 export const useDogs = () => {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [selectedDogId, setSelectedDogId] = useState<string | null>(() => {
     return localStorage.getItem(SELECTED_DOG_KEY);
   });
 
   const {
-    data: dogs = [],
+    user,
+    queryKey,
+    data: dogs,
     isLoading,
     error,
     refetch
-  } = useQuery({
-    queryKey: ['dogs', user?.uid],
-    queryFn: () => getUserDogs(user!.uid),
-    enabled: !!user,
-  });
+  } = useUserDocuments('dogs', [], getUserDogs);
 
   // Derive selectedDog from the list + stored ID
-  const selectedDog = dogs.find(d => d.id === selectedDogId) ?? dogs[0] ?? null;
+  const selectedDog = dogs.find(d => d.id === selectedDogId) ?? (dogs[0] as Dog | undefined) ?? null;
 
   // Keep selectedDogId in sync: auto-select first dog if nothing selected or selection invalid
   useEffect(() => {
@@ -64,67 +59,41 @@ export const useDogs = () => {
     }
   }, []);
 
-  const createDogMutation = useMutation({
-    mutationFn: async (dogData: DogFormData & { photo?: File }) => {
-      let photoUrl: string | undefined;
-      
-      if (dogData.photo) {
-        photoUrl = await uploadDogPhoto(dogData.photo, user!.uid, 'temp');
-      }
+  // Refreshes the goal lists too, since a new dog starts with predefined goals
+  const createDogMutation = useRefreshingMutation(async ({ photo, ...data }: DogFormData & { photo?: File }) => {
+    const photoUrl = photo ? await uploadDogPhoto(photo, user!.uid, 'temp') : undefined;
+    const dogId = await createDog({
+      ...data,
+      userId: user!.uid,
+      photoUrl,
+    });
 
-      const { photo: _photo, ...data } = dogData;
-      const dogId = await createDog({
-        ...data,
-        userId: user!.uid,
-        photoUrl,
-      });
+    // Auto-create predefined goals for the new dog
+    try {
+      const initialGoals = createInitialGoalsForDog(dogId, user!.uid);
+      await createGoalsBatch(initialGoals);
+    } catch {
+      // Goals creation failed — non-critical, user can still create later
+    }
 
-      // Auto-create predefined goals for the new dog
-      try {
-        const initialGoals = createInitialGoalsForDog(dogId, user!.uid);
-        await createGoalsBatch(initialGoals);
-      } catch {
-        // Goals creation failed — non-critical, user can still create later
-      }
+    return dogId;
+  }, queryKey, ['goals', user?.uid]);
 
-      return dogId;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dogs', user?.uid] });
-      queryClient.invalidateQueries({ queryKey: ['goals', user?.uid] });
-    },
-  });
+  const updateDogMutation = useRefreshingMutation(async ({ 
+    id, 
+    data, 
+    photo 
+  }: { 
+    id: string; 
+    data: Partial<DogFormData>; 
+    photo?: File 
+  }) => {
+    const { photoUrl: currentPhotoUrl, ...updateData } = data;
+    const photoUrl = photo ? await uploadDogPhoto(photo, user!.uid, id) : currentPhotoUrl;
+    return updateDog(id, { ...updateData, photoUrl });
+  }, queryKey);
 
-  const updateDogMutation = useMutation({
-    mutationFn: async ({ 
-      id, 
-      data, 
-      photo 
-    }: { 
-      id: string; 
-      data: Partial<DogFormData>; 
-      photo?: File 
-    }) => {
-      let photoUrl = data.photoUrl;
-      
-      if (photo) {
-        photoUrl = await uploadDogPhoto(photo, user!.uid, id);
-      }
-
-      const { photoUrl: _omit, ...updateData } = data;
-      return updateDog(id, { ...updateData, photoUrl });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dogs', user?.uid] });
-    },
-  });
-
-  const deleteDogMutation = useMutation({
-    mutationFn: deleteDog,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dogs', user?.uid] });
-    },
-  });
+  const deleteDogMutation = useRefreshingMutation(deleteDog, queryKey);
 
   return {
     dogs,

@@ -1,21 +1,15 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { screen } from '@testing-library/react';
 import { Sessions } from './Sessions';
+import { useDogs } from '@/hooks/useDogProfile';
+import { useSessions } from '@/hooks/useSessions';
 import { Dog, Session } from '@/types';
+import { makeDogsState, makeSession } from '@/test/fixtures';
+import { clickButton, expectButtons, expectLoadingSkeletons, expectTexts, renderWithRouter, stubHook } from '@/test/utils';
 
 // --- Mocks ---
 
-const mockUseDogs = vi.fn();
-vi.mock('@/hooks/useDogProfile', () => ({
-  useDogs: () => mockUseDogs(),
-}));
-
-const mockDeleteSession = vi.fn();
-const mockUseSessions = vi.fn();
-vi.mock('@/hooks/useSessions', () => ({
-  useSessions: () => mockUseSessions(),
-}));
+vi.mock('@/hooks/useDogProfile');
+vi.mock('@/hooks/useSessions');
 
 const mockShowToast = vi.fn();
 vi.mock('@/context/ToastContext', () => ({
@@ -28,59 +22,26 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => mockNavigate };
 });
 
+const mockDeleteSession = vi.fn();
+
 // --- Helpers ---
 
-const baseDog: Dog = {
-  id: 'dog-1',
-  userId: 'user-1',
-  name: 'Buddy',
-  age: 6,
-  breed: 'Labrador',
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
+const singleMenSession = [makeSession({ id: 's1', type: 'people', category: 'Men' })];
 
-function makeSession(overrides: Partial<Session> = {}): Session {
-  return {
-    id: 'session-1',
-    userId: 'user-1',
-    dogId: 'dog-1',
-    date: new Date('2025-06-15T10:00:00Z'),
-    type: 'people',
-    category: 'Men',
-    reaction: '😊',
-    createdAt: new Date('2025-06-15T10:00:00Z'),
-    ...overrides,
-  };
-}
-
-function renderSessions() {
-  return render(
-    <MemoryRouter>
-      <Sessions />
-    </MemoryRouter>
-  );
-}
-
-function setupDefaultMocks(overrides?: {
-  selectedDog?: Dog | null;
-  sessions?: Session[];
-  isLoading?: boolean;
-}) {
-  const selectedDog = overrides?.selectedDog !== undefined ? overrides.selectedDog : baseDog;
-  const sessions = overrides?.sessions ?? [
-    makeSession({ id: 's1', type: 'people', category: 'Men' }),
-    makeSession({ id: 's2', type: 'dogs', category: 'Small Dogs' }),
-    makeSession({ id: 's3', type: 'environments', category: 'Park' }),
-  ];
-
-  mockUseDogs.mockReturnValue({ selectedDog });
-  mockUseSessions.mockReturnValue({
-    sessions,
+function renderSessions(overrides?: { selectedDog?: Dog | null; sessions?: Session[]; isLoading?: boolean }) {
+  stubHook(useDogs, makeDogsState(overrides?.selectedDog));
+  stubHook(useSessions, {
+    sessions: overrides?.sessions ?? [
+      makeSession({ id: 's1', type: 'people', category: 'Men' }),
+      makeSession({ id: 's2', type: 'dogs', category: 'Small Dogs' }),
+      makeSession({ id: 's3', type: 'environments', category: 'Park' }),
+    ],
     isLoading: overrides?.isLoading ?? false,
     deleteSession: mockDeleteSession,
     isDeleting: false,
   });
+
+  return renderWithRouter(<Sessions />);
 }
 
 // --- Tests ---
@@ -90,131 +51,78 @@ describe('Sessions', () => {
     vi.clearAllMocks();
   });
 
+  it.each([
+    { scenario: 'renders the session log heading with dog name', texts: ['Session Log', /Buddy's socialisation sessions/] },
+    { scenario: 'renders the Log Session button', buttons: [/log session/i] },
+    { scenario: 'renders type filter pills including All', buttons: [/all/i, /people/i, /dogs/i, /environments/i, /noises/i] },
+    { scenario: 'shows all sessions by default', texts: ['All Sessions', '3 sessions'] },
+  ])('$scenario', ({ texts = [], buttons = [] }) => {
+    renderSessions();
+
+    expectTexts(...texts);
+    expectButtons(...buttons);
+  });
+
   it('renders empty state when no dog is selected', () => {
-    setupDefaultMocks({ selectedDog: null });
-    renderSessions();
+    renderSessions({ selectedDog: null });
 
-    expect(screen.getByText('No Dog Selected')).toBeInTheDocument();
-  });
-
-  it('renders the session log heading with dog name', () => {
-    setupDefaultMocks();
-    renderSessions();
-
-    expect(screen.getByText('Session Log')).toBeInTheDocument();
-    expect(screen.getByText(/Buddy's socialisation sessions/)).toBeInTheDocument();
-  });
-
-  it('renders the Log Session button', () => {
-    setupDefaultMocks();
-    renderSessions();
-
-    expect(screen.getByRole('button', { name: /log session/i })).toBeInTheDocument();
+    expectTexts('No Dog Selected');
   });
 
   it('navigates to /log-exposure when Log Session button is clicked', async () => {
-    const user = userEvent.setup();
-    setupDefaultMocks();
     renderSessions();
 
-    await user.click(screen.getByRole('button', { name: /log session/i }));
+    await clickButton(/log session/i);
 
     expect(mockNavigate).toHaveBeenCalledWith('/log-exposure');
   });
 
-  it('renders type filter pills including All', () => {
-    setupDefaultMocks();
-    renderSessions();
-
-    expect(screen.getByRole('button', { name: /all/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /people/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /dogs/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /environments/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /noises/i })).toBeInTheDocument();
-  });
-
-  it('shows all sessions by default', () => {
-    setupDefaultMocks();
-    renderSessions();
-
-    expect(screen.getByText('All Sessions')).toBeInTheDocument();
-    expect(screen.getByText('3 sessions')).toBeInTheDocument();
-  });
-
   it('filters sessions when a type filter is clicked', async () => {
-    const user = userEvent.setup();
-    setupDefaultMocks();
     renderSessions();
 
-    await user.click(screen.getByRole('button', { name: /people/i }));
+    await clickButton(/people/i);
 
-    expect(screen.getByText('People Sessions')).toBeInTheDocument();
-    expect(screen.getByText(/1 session/)).toBeInTheDocument();
-    expect(screen.getByText(/filtered/)).toBeInTheDocument();
+    expectTexts('People Sessions', /1 session/, /filtered/);
   });
 
   it('shows loading skeletons when loading', () => {
-    setupDefaultMocks({ isLoading: true });
-    const { container } = renderSessions();
-
-    const skeletons = container.querySelectorAll('.animate-pulse');
-    expect(skeletons.length).toBeGreaterThan(0);
+    expectLoadingSkeletons(renderSessions({ isLoading: true }).container);
   });
 
   it('shows empty state when no sessions exist', () => {
-    setupDefaultMocks({ sessions: [] });
-    renderSessions();
+    renderSessions({ sessions: [] });
 
-    expect(screen.getByText('No sessions logged yet')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /log your first session/i })).toBeInTheDocument();
+    expectTexts('No sessions logged yet');
+    expectButtons(/log your first session/i);
   });
 
   it('shows filtered empty state when filter has no matches', async () => {
-    const user = userEvent.setup();
-    setupDefaultMocks({
-      sessions: [makeSession({ id: 's1', type: 'people', category: 'Men' })],
-    });
-    renderSessions();
+    renderSessions({ sessions: singleMenSession });
 
-    await user.click(screen.getByRole('button', { name: /noises/i }));
+    await clickButton(/noises/i);
 
-    expect(screen.getByText('No noises sessions yet')).toBeInTheDocument();
+    expectTexts('No noises sessions yet');
   });
 
   it('shows delete confirmation modal when session delete is triggered', async () => {
-    const user = userEvent.setup();
-    setupDefaultMocks({
-      sessions: [makeSession({ id: 's1', type: 'people', category: 'Men' })],
-    });
-    renderSessions();
+    renderSessions({ sessions: singleMenSession });
 
     // SessionItem renders a trash icon button with aria-label="Delete session"
-    const deleteButton = screen.getByRole('button', { name: /delete session/i });
-    await user.click(deleteButton);
+    await clickButton(/delete session/i);
 
-    // The Modal component opens with a dialog role
+    // The Modal component opens with a dialog role, showing Delete and Cancel buttons
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText(/are you sure you want to delete/i)).toBeInTheDocument();
-    // Delete and Cancel buttons are visible
-    expect(screen.getByRole('button', { name: /^delete$/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
+    expectTexts(/are you sure you want to delete/i);
+    expectButtons(/^delete$/i, /cancel/i);
   });
 
   it('calls deleteSession and shows toast on confirm delete', async () => {
-    const user = userEvent.setup();
     mockDeleteSession.mockResolvedValue(undefined);
-    setupDefaultMocks({
-      sessions: [makeSession({ id: 's1', type: 'people', category: 'Men' })],
-    });
-    renderSessions();
+    renderSessions({ sessions: singleMenSession });
 
-    // Trigger the delete via SessionItem's trash icon
-    const deleteButton = screen.getByRole('button', { name: /delete session/i });
-    await user.click(deleteButton);
-
-    // Confirm in the modal
-    const confirmButton = screen.getByRole('button', { name: /^delete$/i });
-    await user.click(confirmButton);
+    // Trigger the delete via SessionItem's trash icon, then confirm in the modal
+    await clickButton(/delete session/i);
+    await clickButton(/^delete$/i);
 
     expect(mockDeleteSession).toHaveBeenCalledWith('s1');
     expect(mockShowToast).toHaveBeenCalledWith('Session deleted', 'success');

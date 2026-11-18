@@ -1,130 +1,66 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Input, Textarea } from './Input';
+import { itAcceptsClassNameAndRef } from '@/test/utils';
+
+type FieldComponent = typeof Input | typeof Textarea;
 
 describe('Input Components', () => {
-  describe('Input', () => {
+  describe.each<{ name: string; Field: FieldComponent; testId: string; typed: string }>([
+    { name: 'Input', Field: Input, testId: 'input', typed: 'test value' },
+    { name: 'Textarea', Field: Textarea, testId: 'textarea', typed: 'Line 1\nLine 2\nLine 3' },
+  ])('$name', ({ Field, testId, typed }) => {
+    const field = () => screen.getByTestId(testId) as HTMLInputElement | HTMLTextAreaElement;
+
     it('renders without crashing', () => {
-      render(<Input data-testid="input" />);
-      expect(screen.getByTestId('input')).toBeInTheDocument();
-    });
-
-    it('renders with different input types', () => {
-      const { rerender } = render(<Input type="text" data-testid="input" />);
-      expect(screen.getByTestId('input')).toHaveAttribute('type', 'text');
-
-      rerender(<Input type="email" data-testid="input" />);
-      expect(screen.getByTestId('input')).toHaveAttribute('type', 'email');
-
-      rerender(<Input type="password" data-testid="input" />);
-      expect(screen.getByTestId('input')).toHaveAttribute('type', 'password');
+      render(<Field data-testid={testId} />);
+      expect(field()).toBeInTheDocument();
     });
 
     it('handles value changes', async () => {
-      const user = userEvent.setup();
-      render(<Input data-testid="input" />);
-      const input = screen.getByTestId('input') as HTMLInputElement;
-      
-      await user.type(input, 'test value');
-      expect(input.value).toBe('test value');
+      render(<Field data-testid={testId} />);
+
+      await userEvent.setup().type(field(), typed);
+
+      expect(field().value).toBe(typed);
     });
 
     it('shows placeholder text', () => {
-      render(<Input placeholder="Enter your name" data-testid="input" />);
-      expect(screen.getByTestId('input')).toHaveAttribute('placeholder', 'Enter your name');
-    });
-
-    it('can be disabled', async () => {
-      const handleChange = vi.fn();
-      render(<Input disabled onChange={handleChange} data-testid="input" />);
-      const input = screen.getByTestId('input');
-      expect(input).toBeDisabled();
-    });
-
-    it('can be required', () => {
-      render(<Input required data-testid="input" />);
-      expect(screen.getByTestId('input')).toBeRequired();
-    });
-
-    it('applies custom className', () => {
-      render(<Input className="custom-class" data-testid="input" />);
-      expect(screen.getByTestId('input')).toHaveClass('custom-class');
-    });
-
-    it('forwards ref correctly', () => {
-      const ref = vi.fn();
-      render(<Input ref={ref} data-testid="input" />);
-      expect(ref).toHaveBeenCalled();
-    });
-
-    it('handles focus events', async () => {
-      const user = userEvent.setup();
-      render(<Input data-testid="input" />);
-      const input = screen.getByTestId('input');
-      
-      await user.click(input);
-      expect(input).toHaveFocus();
-    });
-
-    it('supports aria-label for accessibility', () => {
-      render(<Input aria-label="Username" data-testid="input" />);
-      expect(screen.getByLabelText('Username')).toBeInTheDocument();
-    });
-  });
-
-  describe('Textarea', () => {
-    it('renders without crashing', () => {
-      render(<Textarea data-testid="textarea" />);
-      expect(screen.getByTestId('textarea')).toBeInTheDocument();
-    });
-
-    it('handles value changes', async () => {
-      const user = userEvent.setup();
-      render(<Textarea data-testid="textarea" />);
-      const textarea = screen.getByTestId('textarea') as HTMLTextAreaElement;
-      
-      await user.type(textarea, 'This is a long text');
-      expect(textarea.value).toBe('This is a long text');
-    });
-
-    it('shows placeholder text', () => {
-      render(<Textarea placeholder="Enter your message" data-testid="textarea" />);
-      expect(screen.getByTestId('textarea')).toHaveAttribute('placeholder', 'Enter your message');
+      render(<Field placeholder="Enter your text" data-testid={testId} />);
+      expect(field()).toHaveAttribute('placeholder', 'Enter your text');
     });
 
     it('can be disabled', () => {
-      render(<Textarea disabled data-testid="textarea" />);
-      expect(screen.getByTestId('textarea')).toBeDisabled();
+      render(<Field disabled data-testid={testId} />);
+      expect(field()).toBeDisabled();
     });
 
     it('can be required', () => {
-      render(<Textarea required data-testid="textarea" />);
-      expect(screen.getByTestId('textarea')).toBeRequired();
-    });
-
-    it('applies custom className', () => {
-      render(<Textarea className="custom-class" data-testid="textarea" />);
-      expect(screen.getByTestId('textarea')).toHaveClass('custom-class');
-    });
-
-    it('forwards ref correctly', () => {
-      const ref = vi.fn();
-      render(<Textarea ref={ref} data-testid="textarea" />);
-      expect(ref).toHaveBeenCalled();
-    });
-
-    it('handles multiline text', async () => {
-      const user = userEvent.setup();
-      render(<Textarea data-testid="textarea" />);
-      const textarea = screen.getByTestId('textarea') as HTMLTextAreaElement;
-      
-      await user.type(textarea, 'Line 1\nLine 2\nLine 3');
-      expect(textarea.value).toBe('Line 1\nLine 2\nLine 3');
+      render(<Field required data-testid={testId} />);
+      expect(field()).toBeRequired();
     });
 
     it('supports aria-label for accessibility', () => {
-      render(<Textarea aria-label="Message" data-testid="textarea" />);
-      expect(screen.getByLabelText('Message')).toBeInTheDocument();
+      render(<Field aria-label="Field label" data-testid={testId} />);
+      expect(screen.getByLabelText('Field label')).toBeInTheDocument();
+    });
+
+    itAcceptsClassNameAndRef((props) => <Field data-testid={testId} {...props} />, testId);
+  });
+
+  describe('Input', () => {
+    it.each(['text', 'email', 'password'])('renders with input type %s', (type) => {
+      render(<Input type={type} data-testid="input" />);
+      expect(screen.getByTestId('input')).toHaveAttribute('type', type);
+    });
+
+    it('handles focus events', async () => {
+      render(<Input data-testid="input" />);
+      const input = screen.getByTestId('input');
+
+      await userEvent.setup().click(input);
+
+      expect(input).toHaveFocus();
     });
   });
 });
